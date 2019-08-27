@@ -306,19 +306,24 @@ class Env:
             py.image.save_as(fig, filename=name + '.jpeg')
 
 
-def drawPath(ins : instance.MCMPInstance):
+def drawPath(ins : instance.MCMPInstance, path = []):
     print('sss')
     env = Env(ins._mat)
     env.addgrid()
     robLst = []
     robRowLst = [x[0] for x in ins._robPosLst]
     robColLst = [x[1] for x in ins._robPosLst]
-
     robLst.append(robRowLst)
     robLst.append(robColLst)
     env.addRobotStartPnt(robLst)
-    env.drawPic('test')
+    robNum = ins._robNum
 
+    # path = []
+    if path == []:
+        pass
+    else:
+        env.addPath(robNum,path)
+    env.drawPic('test')
     pass
 
 if __name__ == '__main__':
