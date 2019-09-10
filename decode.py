@@ -86,7 +86,6 @@ class MCMPDecode(object):
         self._robPosLst = []
         self._c_robPosLst = []
 
-
         self._parternLst = []
         self._parternLst.append([LawnMainDir.right,LawnMainDir.top])
         self._parternLst.append([LawnMainDir.right,LawnMainDir.bottom])
@@ -401,7 +400,7 @@ if __name__ == '__main__':
     # print(np.random.randint(0,20,size = 3))
     # print(np.random.randint(0,120,size=5))
 
-    codeNum = 10
+    codeNum = 50
     typeLst = np.random.randint(0, 8, size=robNum + codeNum)
     stepLst = np.random.randint(0,120,size=robNum  + codeNum)
     xLst = np.random.randint(0,20,size = codeNum)

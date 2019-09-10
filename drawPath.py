@@ -17,11 +17,9 @@ class Pnt:
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
-
     def pnt2dict(self):
         dic = dict(x=x, y=y)
         return dic
-
     def display(self):
         print('x = ', self.x, 'y = ', self.y)
 
