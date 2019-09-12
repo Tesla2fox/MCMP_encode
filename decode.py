@@ -1,6 +1,6 @@
 
 import numpy as np
-import instance
+import MCMPinstance
 from enum import  Enum
 import drawPath
 import Astar as A
@@ -67,7 +67,7 @@ def dirCal(lawn_main_dir,clock_dir):
 
 
 class MCMPDecode(object):
-    def __init__(self,ins : instance.MCMPInstance):
+    def __init__(self, ins : MCMPinstance.MCMPInstance):
         self._pathLst = []
 
         self._row = ins._row
@@ -389,7 +389,7 @@ if __name__ == '__main__':
                 obstacleLst.append(0)
             else:
                 obstacleLst.append(np.random.choice([0,1],p =p.ravel()))
-    ins =    instance.MCMPInstance(row,col,obstacleLst,robPosLst)
+    ins =    MCMPinstance.MCMPInstance(row, col, obstacleLst, robPosLst)
     mcmp_decode = MCMPDecode(ins)
 
     chrom = []

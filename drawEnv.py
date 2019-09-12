@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 import plotly
 import numpy as np
-
+import MCMPinstance
 
 class Pnt:
     def __init__(self, x=0, y=0):
@@ -41,6 +41,22 @@ class Rect:
         return dic
 
 
+class Line:
+    def __init__(self, pnt0=Pnt(), pnt1=Pnt()):
+        self.x0 = pnt0.x
+        self.y0 = pnt0.y
+        self.x1 = pnt1.x
+        self.y1 = pnt1.y
+
+    def line2dict(self):
+        dic = dict()
+        dic['type'] = 'line'
+        dic['x0'] = self.x0
+        dic['y0'] = self.y0
+        dic['x1'] = self.x1
+        dic['y1'] = self.y1
+        dic['line'] = dict(color='rgb(128, 0, 128)')
+        return dic
 
 class Env:
     def __init__(self, mat):
@@ -68,8 +84,49 @@ class Env:
                 #                getLevelColor(mat[i][j])
 
                 self._shapeLst.append(rectDic)
-        # print(len(self.shapeLst))
-    def drawPic(self, name='env', fileType=True):
+
+    def addRobotStartPnt(self, lst=[]):
+        for robID in range(len(lst)):
+            startTrace = go.Scatter(x=[lst[robID][0]+0.5], y=[lst[robID][1]+0.5], mode='markers',
+                                    marker=dict(symbol='cross-dot', size=20),
+                                    name='Robot_' + str(robID))
+            self._scatterLst.append(startTrace)
+    def addEdges(self, lst=[]):
+        mark_x = []
+        mark_y = []
+        for p in range(len(lst)):
+            pnt0 = Pnt(lst[p][0] + 0.5, lst[p][1] + 0.5)
+            pnt1 = Pnt(lst[p][2] + 0.5, lst[p][3] + 0.5)
+            mark_x.append(pnt0.x)
+            mark_x.append(pnt1.x)
+            mark_y.append(pnt0.y)
+            mark_y.append(pnt1.y)
+            line = Line(pnt0, pnt1)
+            lineDic = line.line2dict()
+            #                print(randColor())
+            lineDic['line']['color'] = 'rgba(15,15,15,0.5)'
+            lineDic['line']['width'] = 3
+            self._shapeLst.append(lineDic)
+
+        markTrace = go.Scatter(mode='markers',
+                               x=mark_x,
+                               y=mark_y,
+                               marker=dict(size=3),
+                               name='Spanning-Tree')
+        self._scatterLst.append(markTrace)
+    def addSinglePathInd(self,pathInd = []):
+
+        x = [path_unit[0]+0.5 for path_unit in pathInd]
+        y = [path_unit[1]+0.5 for path_unit in pathInd]
+
+        markTrace = go.Scatter(mode='markers+lines',
+                               x=x,
+                               y=y,
+                               # marker=dict(size=10),
+                               name='Path_single' )
+        self._scatterLst.append(markTrace)
+
+    def drawPic(self, name='env', showBoolean = True,saveBoolean = False,):
         layout = dict()
         layout['shapes'] = self._shapeLst
         # layout['xaxis'] = dict(showgrid=False)
@@ -95,34 +152,45 @@ class Env:
         layout['xaxis']['range'] = [0, len(self._mat[0])]
         layout['yaxis']['range'] = [0, len(self._mat)]
 
-        # # layout['font'] = dict(
-        # #     family='sans-serif',
-        # #     sie=25,
-        # #     color='#000'
-        # # )
+        layout['font'] = dict(
+            family='sans-serif',
+            size=25,
+            color='#000'
+        )
         layout['autosize'] = False
         layout['height'] = 1000
         layout['width'] = 1000
+        layout['template'] = "plotly_white"
         # layout['annotations'] = self.annotations
         #        print(layout)
         fig = go.Figure(data = self._scatterLst, layout = layout)
-        # fig.add_trace(self._scatterLst)
-        # fig.update_layout(shapes = self._shapeLst)
-        # fig.update_layout(layout)
-        fig.show()
-        # fig = dict(data=self._scatterLst, layout=layout)
-        # if (fileType):
-        #     plotly.offline.plot(fig, filename=name + '.html', validate=False)
-        # else:
-        #     pass
-            # py.image.save_as(fig, filename=name + '.jpeg')
 
+        if showBoolean:
+            fig.show()
+        if saveBoolean:
+            fig.write_image('fig.pdf')
+
+
+def drawPic(ins: MCMPinstance.MCMPInstance, singlePathInd = None, edgeLst = None):
+    env = Env(ins._mat)
+    env.addgrid()
+    env.addRobotStartPnt(ins._robPosLst)
+    if singlePathInd != None:
+        env.addSinglePathInd(singlePathInd)
+        # pass
+    if edgeLst != None:
+        # raise Exception('xxx')
+        env.addEdges(edgeLst)
+    else:
+        pass
+        # raise  Exception('ssss')
+    env.drawPic(name = 'pic')
 
 
 if __name__ == '__main__':
 
-    row = 20
-    col = 20
+    row = 40
+    col = 40
     robNum = 2
     p = np.array([0.9,0.1])
     np.random.seed(1000)
@@ -155,7 +223,8 @@ if __name__ == '__main__':
 
     env = Env(_mat)
     env.addgrid()
-    env.drawPic()
+    env.addRobotStartPnt(robPosLst)
+    env.drawPic(showBoolean= True, saveBoolean= False)
     print('ss')
 
 

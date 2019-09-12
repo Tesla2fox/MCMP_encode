@@ -1,4 +1,4 @@
-import  instance
+import  MCMPinstance
 import  numpy as np
 
 import plotly.plotly as py
@@ -304,7 +304,7 @@ class Env:
             py.image.save_as(fig, filename=name + '.jpeg')
 
 
-def drawPath(ins : instance.MCMPInstance, path = []):
+def drawPath(ins : MCMPinstance.MCMPInstance, path = []):
     print('sss')
     env = Env(ins._mat)
     env.addgrid()
@@ -345,6 +345,6 @@ if __name__ == '__main__':
                 obstacleLst.append(0)
             else:
                 obstacleLst.append(np.random.choice([0,1],p =p.ravel()))
-    ins =    instance.MCMPInstance(row,col,obstacleLst,robPosLst)
+    ins =    MCMPinstance.MCMPInstance(row, col, obstacleLst, robPosLst)
 
     drawPath(ins)

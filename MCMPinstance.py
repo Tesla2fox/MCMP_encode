@@ -1,8 +1,8 @@
-
-
 import random
 import numpy as np
 import networkx as nx
+import readcfg as rd
+
 # import drawPath
 import matplotlib.pyplot as plt
 
@@ -32,7 +32,50 @@ def getNeighbor(envMat,lst = (0,0),row =20, col =20):
     return resLst
 
 class MCMPInstance(object):
-    def __init__(self,row,col,obstacleLst,robPosLst):
+
+    def __init__(self):
+        pass
+
+    def loadCfg(self, fileName: str):
+        read_cfg = rd.Read_Cfg(fileName)
+        self._row = read_cfg.getSingleVal('row',dtype='int')
+        self._col = read_cfg.getSingleVal('col',dtype='int')
+
+        self._robRowLst = []
+        self._robColLst = []
+
+        read_cfg.get('robRow',self._robRowLst, dtype= 'int')
+        read_cfg.get('robCol',self._robColLst, dtype= 'int')
+
+        self._robPosLst = []
+
+        for robID in range(len(self._robRowLst)):
+            self._robPosLst.append((self._robRowLst[robID],self._robColLst[robID]))
+
+
+
+        self._robNum = len(self._robColLst)
+        self._robReachRowLst = []
+        self._robReachColLst = []
+
+        read_cfg.get('robReachRowLst',self._robReachRowLst, dtype= 'int')
+        read_cfg.get('robReachColLst',self._robReachColLst, dtype= 'int')
+
+
+        self._robUnReachRowLst = []
+        self._robUnReachColLst = []
+
+        read_cfg.get('robUnReachRowLst',self._robUnReachRowLst, dtype= 'int')
+        read_cfg.get('robUnReachColLst',self._robUnReachColLst, dtype= 'int')
+
+        self._mat = np.zeros([self._row,self._col])
+
+        for i in range(len(self._robUnReachColLst)):
+            self._mat[self._robUnReachRowLst[i]][self._robUnReachColLst[i]] = 1
+
+
+
+    def setPara(self,row,col,obstacleLst,robPosLst):
         self._row = row
         self._col = col
         self._obstacleLst  = obstacleLst
@@ -116,8 +159,11 @@ class MCMPInstance(object):
         #     for col in len(self._mat[])
         # nx.draw(G)
         # plt.show()
-
         print('len = ',len(self._robReachColLst))
+
+
+    def __str__(self):
+        return 'robNum = ' + str(self._robNum) + ' row = ' + str(self._row) + ' col = ' + str(self._col)
 if __name__ =='__main__':
     row = 20
     col = 20
