@@ -47,6 +47,7 @@ if __name__ == '__main__':
     goal = (5, 10)
     foundPathInd = list(astar_solver.astar(start,goal))
     print(foundPathInd)
+    foundPathInd = []
     # if ins._mat[1][7] == 1:
     #     raise  Exception()
     drawPic(ins = ins, singlePathInd = foundPathInd)

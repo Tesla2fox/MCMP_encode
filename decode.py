@@ -3,7 +3,7 @@ import numpy as np
 import MCMPinstance
 from enum import  Enum
 import drawPath
-import Astar as A
+import Astar_XM as A
 
 # class Pattern(Enum):
 

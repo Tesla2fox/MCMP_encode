@@ -104,7 +104,7 @@ class Env:
             line = Line(pnt0, pnt1)
             lineDic = line.line2dict()
             #                print(randColor())
-            lineDic['line']['color'] = 'rgba(15,15,15,0.5)'
+            lineDic['line']['color'] = 'darkred'
             lineDic['line']['width'] = 3
             self._shapeLst.append(lineDic)
 
@@ -114,6 +114,32 @@ class Env:
                                marker=dict(size=3),
                                name='Spanning-Tree')
         self._scatterLst.append(markTrace)
+
+    def addEdgesInPnt(self,lst = []):
+        mark_x = []
+        mark_y = []
+        for p in range(len(lst)):
+            pnt0 = Pnt(lst[p][0], lst[p][1])
+            pnt1 = Pnt(lst[p][2], lst[p][3])
+            mark_x.append(pnt0.x)
+            mark_x.append(pnt1.x)
+            mark_y.append(pnt0.y)
+            mark_y.append(pnt1.y)
+            line = Line(pnt0, pnt1)
+            lineDic = line.line2dict()
+            #                print(randColor())
+            lineDic['line']['color'] = 'darkred'
+            # lineDic['line']['color'] = 'rgba(15,15,15,0.5)'
+            lineDic['line']['width'] = 3
+            self._shapeLst.append(lineDic)
+
+        markTrace = go.Scatter(mode='markers',
+                               x=mark_x,
+                               y=mark_y,
+                               marker=dict(size=3),
+                               name='Spanning-Tree')
+        self._scatterLst.append(markTrace)
+
     def addSinglePathInd(self,pathInd = []):
 
         x = [path_unit[0]+0.5 for path_unit in pathInd]
@@ -185,6 +211,14 @@ def drawPic(ins: MCMPinstance.MCMPInstance, singlePathInd = None, edgeLst = None
         pass
         # raise  Exception('ssss')
     env.drawPic(name = 'pic')
+
+def drawSTCPic(ins:MCMPinstance.MCMPInstance, edgePntLst = None):
+    env = Env(ins._mat)
+    env.addgrid()
+    env.addEdgesInPnt(edgePntLst)
+    env.drawPic(name = 'pic')
+    raise Exception('xx')
+
 
 
 if __name__ == '__main__':
