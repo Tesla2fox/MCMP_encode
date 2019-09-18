@@ -37,6 +37,7 @@ class MCMPInstance(object):
         pass
 
     def loadCfg(self, fileName: str):
+        self._fileName = fileName
         read_cfg = rd.Read_Cfg(fileName)
         self._row = read_cfg.getSingleVal('row',dtype='int')
         self._col = read_cfg.getSingleVal('col',dtype='int')

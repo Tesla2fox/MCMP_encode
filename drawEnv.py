@@ -63,7 +63,7 @@ class Env:
         self._mat = mat
         self._shapeLst= []
         self._scatterLst = []
-        self.annotations = []
+        self._annotationsLst = []
 
     def addgrid(self):
         g_color = 'blue'
@@ -151,8 +151,38 @@ class Env:
                                # marker=dict(size=10),
                                name='Path_single' )
         self._scatterLst.append(markTrace)
+    def addMultiPathInd(self, pathLst = []):
+        # robNum
+        for robID in range(len(pathLst)):
+            path = pathLst[robID]
+            x = [path_unit[0]+0.5 for path_unit in path]
+            y = [path_unit[1]+0.5 for path_unit in path]
 
-    def drawPic(self, name='env', showBoolean = True,saveBoolean = False,):
+            markTrace = go.Scatter(mode='markers+lines',
+                                   x=x,
+                                   y=y,
+                                   # marker=dict(size=10),
+                                   name='Path_' + str(robID) )
+
+            self._scatterLst.append(markTrace)
+    def addMidPosLst(self, pathLst = []):
+        for robID in range(len(pathLst)):
+            path = pathLst[robID]
+            x = [path_unit[0]+0.5 for path_unit in path]
+            y = [path_unit[1]+0.5 for path_unit in path]
+            markTrace = go.Scatter(mode='markers',
+                                   x=x,
+                                   y=y,
+                                   marker=dict(symbol='square-dot', size=20),
+                                   name='midPos_' + str(robID) )
+            self._scatterLst.append(markTrace)
+            for i in range(len(x)):
+                self._annotationsLst.append(dict(showarrow=False,
+                                                 x=x[i], y=y[i],
+                                                 text=str(i)))
+
+
+    def drawPic(self, fileName='env', titleName = None, showBoolean = True,saveBoolean = False,):
         layout = dict()
         layout['shapes'] = self._shapeLst
         # layout['xaxis'] = dict(showgrid=False)
@@ -187,6 +217,10 @@ class Env:
         layout['height'] = 1000
         layout['width'] = 1000
         layout['template'] = "plotly_white"
+        layout['annotations'] = self._annotationsLst
+        if titleName != None:
+            layout['title'] = go.layout.Title(text = titleName)
+
         # layout['annotations'] = self.annotations
         #        print(layout)
         fig = go.Figure(data = self._scatterLst, layout = layout)
@@ -194,10 +228,11 @@ class Env:
         if showBoolean:
             fig.show()
         if saveBoolean:
-            fig.write_image('fig.pdf')
+            fig.write_image( fileName +'.pdf')
 
 
-def drawPic(ins: MCMPinstance.MCMPInstance, singlePathInd = None, edgeLst = None):
+def drawPic(ins: MCMPinstance.MCMPInstance,  singlePathInd = None, edgeLst = None, fileName='env', titleName = None
+            ,multiPath = None, midPosLst = None):
     env = Env(ins._mat)
     env.addgrid()
     env.addRobotStartPnt(ins._robPosLst)
@@ -209,14 +244,18 @@ def drawPic(ins: MCMPinstance.MCMPInstance, singlePathInd = None, edgeLst = None
         env.addEdges(edgeLst)
     else:
         pass
+    if multiPath != None:
+        env.addMultiPathInd(multiPath)
+    if midPosLst != None:
+        env.addMidPosLst(midPosLst)
         # raise  Exception('ssss')
-    env.drawPic(name = 'pic')
+    env.drawPic(fileName = fileName, titleName = titleName)
 
 def drawSTCPic(ins:MCMPinstance.MCMPInstance, edgePntLst = None):
     env = Env(ins._mat)
     env.addgrid()
     env.addEdgesInPnt(edgePntLst)
-    env.drawPic(name = 'pic')
+    env.drawPic(fileName= 'pic')
     raise Exception('xx')
 
 

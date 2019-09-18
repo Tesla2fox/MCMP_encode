@@ -260,8 +260,8 @@ class STC_Map(object):
         sVert = self._stcGraph.nodes[sInd]['vert']
         tVert = self._stcGraph.nodes[tInd]['vert']
 
-        gridInd_row = int((sVert._pos_x + tVert._pos_x)/2 )
-        gridInd_col = int((sVert._pos_y + tVert._pos_y)/2 )
+        gridInd_row = int((sVert._pos_x + tVert._pos_x)/2 - 1)
+        gridInd_col = int((sVert._pos_y + tVert._pos_y)/2 - 1)
         '''
         此处存在问题
         '''

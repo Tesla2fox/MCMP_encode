@@ -224,7 +224,7 @@ class Env:
                                                  x=x[i], y=y[i],
                                                  text=str(i)))
             self.drawData.append(markTrace)
-
+    # def addMultiPath(self,robNum = 0, lst ):
     def addSTCGraph(self, robNum=0, lst=[], txtType=False):
         g_color = 'blue'
         bupu = cl.scales[str(robNum)]['seq']['BuPu']

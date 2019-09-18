@@ -215,7 +215,6 @@ class MCMPDecode(object):
             self._c_robPosLst.append((self._robRowLst[robID],self._robColLst[robID]))
             predictPath = self.getWholeLawnPos(robID,main_dir,first_dir,dic['step'])
             print('robID',robID,' mainDir = ', main_dir,' first_dir = ',first_dir)
-
             self._predictPathLst.append(predictPath)
             self._pathLst.append([self._c_robPosLst[robID]])
 
@@ -337,7 +336,6 @@ class MCMPDecode(object):
                     # raise  Exception('sdasd')
                     return act_patternStep,pathList
                 # return pre_row,pre_col
-
         # while self._mat[pre_row][pre_col] == 0:
         pass
 
