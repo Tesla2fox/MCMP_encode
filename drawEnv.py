@@ -256,7 +256,7 @@ def drawSTCPic(ins:MCMPinstance.MCMPInstance, edgePntLst = None):
     env.addgrid()
     env.addEdgesInPnt(edgePntLst)
     env.drawPic(fileName= 'pic')
-    raise Exception('xx')
+    # raise Exception('xx')
 
 
 

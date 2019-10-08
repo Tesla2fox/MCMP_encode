@@ -37,11 +37,15 @@ class MCMPInstance(object):
         pass
 
     def loadCfg(self, fileName: str):
-        self._fileName = fileName
+
+        print(fileName)
+        # self._fileName = fileName
         read_cfg = rd.Read_Cfg(fileName)
         self._row = read_cfg.getSingleVal('row',dtype='int')
         self._col = read_cfg.getSingleVal('col',dtype='int')
 
+        # print(self._row)
+        # exit()
         self._robRowLst = []
         self._robColLst = []
 
@@ -141,7 +145,7 @@ class MCMPInstance(object):
                 self._robReachRowLst.append(gridUnit[0])
                 self._robReachColLst.append(gridUnit[1])
 
-        # print('lenMat = ',len(self._mat[0]))
+        print('lenMat = ',len(self._mat[0]))
 
         '''
         xuyao genggai 

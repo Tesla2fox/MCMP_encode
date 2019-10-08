@@ -11,7 +11,6 @@ import numpy as np
 GridInd = namedtuple('GridInd', ['row', 'col'])
 RobPos = namedtuple('RobPos',['row','col'])
 
-
 class LawnMainDir(Enum):
     right = 1
     top  = 2

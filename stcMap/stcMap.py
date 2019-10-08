@@ -1,11 +1,12 @@
 from MCMPinstance import  MCMPInstance
-from math import  ceil
+from math import  ceil,floor
 from collections import  namedtuple
 from enum import  Enum
 import networkx as nx
 import matplotlib.pyplot as plt
 import sympy
 from  drawEnv import drawPic,drawSTCPic
+
 
 class STCVertType(Enum):
     wayVert = 0
@@ -130,14 +131,13 @@ class STC_Map(object):
                 self._stcGraph.add_node(stc_vertInd, vert=vert)
                 pass
 
-        print('xx',self._stcGraph.nodes.data())
-
+        # print('xx',self._stcGraph.nodes.data())
         # exit()
 
         for graphInd in self._stcGraph:
-            print(graphInd)
+            # print(graphInd)
             # print(self._stcGraph.nodes[graphInd]['vert'])
-            print(self._stcGraph.nodes[graphInd])
+            # print(self._stcGraph.nodes[graphInd])
             vert = self._stcGraph.nodes[graphInd]['vert']
             if vert._type != STCVertType.obstacle:
                 neiLst = self.getSTCNeighbor(graphInd)
@@ -222,7 +222,7 @@ class STC_Map(object):
                     else:
                         virType = STCVirtualVertType.VRB
                 nei_stcGridInd = STCGridInd(stc_gridInd.row + 1, stc_gridInd.col, virType)
-                if self.adjacent(stc_gridInd, nei_stcGridInd, STCDir.left):
+                if self.adjacent(stc_gridInd, nei_stcGridInd, STCDir.right):
                     res.append(nei_stcGridInd)
         if ad_top:
             grid_ind = GridInd(row = stc_gridInd.row, col = stc_gridInd.col + 1)
@@ -234,7 +234,7 @@ class STC_Map(object):
                     else:
                         virType = STCVirtualVertType.VLB
                 nei_stcGridInd = STCGridInd(stc_gridInd.row, stc_gridInd.col + 1, virType)
-                if self.adjacent(stc_gridInd, nei_stcGridInd, STCDir.left):
+                if self.adjacent(stc_gridInd, nei_stcGridInd, STCDir.top):
                     res.append(nei_stcGridInd)
         if ad_bottom:
             grid_ind = GridInd(row = stc_gridInd.row, col = stc_gridInd.col - 1)
@@ -246,7 +246,7 @@ class STC_Map(object):
                     else:
                         virType = STCVirtualVertType.VLT
                 nei_stcGridInd = STCGridInd(stc_gridInd.row, stc_gridInd.col - 1, virType)
-                if self.adjacent(stc_gridInd, nei_stcGridInd, STCDir.left):
+                if self.adjacent(stc_gridInd, nei_stcGridInd, STCDir.bottom):
                     res.append(nei_stcGridInd)
 
         return res
@@ -281,37 +281,88 @@ class STC_Map(object):
         print('tVert._pos_y',tVert._pos_y)
         print('sInd = ', sInd)
         print('tInd = ', tInd)
-        if sInd == STCGridInd(5,0,STCVirtualVertType.VLT) and tInd == STCGridInd(5,1,STCVirtualVertType.NoVir):
-            print('xxx here')
-            # raise Exception('XX')
+        # if sInd.row == 5 and sInd.col == 0:
+        #     pass
 
-        if self._mat[gridInd_row][gridInd_col] == 1:
-            obGridLst.append(GridInd(gridInd_row, gridInd_col))
-        if self._mat[gridInd_row + 1][gridInd_col] == 1:
-            obGridLst.append(GridInd(gridInd_row + 1, gridInd_col))
-        if self._mat[gridInd_row][gridInd_col + 1] == 1:
-            obGridLst.append(GridInd(gridInd_row, gridInd_col + 1))
-        if self._mat[gridInd_row + 1][gridInd_col + 1] == 1:
-            obGridLst.append(GridInd(gridInd_row + 1, gridInd_col + 1))
-
-        if len(obGridLst) <= 1:
-            return True
-        if len(obGridLst) >= 3:
+        if dir == STCDir.left:
+            if not self.obstacleOccupyDir(sInd,STCDir.left) and not self.obstacleOccupyDir(tInd,STCDir.right):
+                if self.gridObstacle(sVert._LTInd) and self.gridObstacle(tVert._RBInd):
+                    return  False
+                if self.gridObstacle(sVert._LBInd) and self.gridObstacle(tVert._RTInd):
+                    return False
+                return True
             return False
-        # len)(obGridLst == 2
-        line1 = sympy.Line2D(sympy.Point(sInd.row * 2, sInd.col * 2), sympy.Point(tInd.row * 2, tInd.col * 2))
-        line2 = sympy.Line2D(sympy.Point(obGridLst[0].row, obGridLst[0].col), sympy.Point(obGridLst[1].row, obGridLst[1].col))
 
-        if sympy.Line2D.is_parallel(line1,line2):
-            return True
-        else:
-            # print(line1,line2)
-            # raise Exception('xx')
+        if dir == STCDir.right:
+            if not self.obstacleOccupyDir(sInd,STCDir.right) and not self.obstacleOccupyDir(tInd,STCDir.left):
+                if self.gridObstacle(sVert._RTInd) and self.gridObstacle(tVert._LBInd):
+                    return False
+                if self.gridObstacle(sVert._RBInd) and self.gridObstacle(tVert._LTInd):
+                    return False
+                return True
             return False
 
 
-        # if dir == STCDir.left:
-        #     if not self.obstacleOccupyDir(sInd, STCDir.left) and not self.obstacleOccupyDir(tInd,STCDir.right):
+        if dir == STCDir.top:
+            if not self.obstacleOccupyDir(sInd,STCDir.top) and not self.obstacleOccupyDir(tInd,STCDir.bottom):
+                if self.gridObstacle(sVert._RTInd) and self.gridObstacle(tVert._LBInd):
+                    return False
+                if self.gridObstacle(sVert._LTInd) and self.gridObstacle(tVert._RBInd):
+                    return False
+                return True
+            return False
+
+
+        if dir == STCDir.bottom:
+            if not self.obstacleOccupyDir(sInd,STCDir.bottom) and not self.obstacleOccupyDir(tInd,STCDir.top):
+                if self.gridObstacle(sVert._RBInd) and self.gridObstacle(tVert._LTInd):
+                    return False
+                if self.gridObstacle(sVert._LBInd) and self.gridObstacle(tVert._RTInd):
+                    return False
+                return True
+            return False
+        raise  Exception (' there is no dir')
+        #
+        # if self._mat[gridInd_row][gridInd_col] == 1:
+        #     obGridLst.append(GridInd(gridInd_row, gridInd_col))
+        #     print('1')
+        # if self._mat[gridInd_row + 1][gridInd_col] == 1:
+        #     obGridLst.append(GridInd(gridInd_row + 1, gridInd_col))
+        #     print('2')
+        # if self._mat[gridInd_row][gridInd_col + 1] == 1:
+        #     obGridLst.append(GridInd(gridInd_row, gridInd_col + 1))
+        #     print('3')
+        # if self._mat[gridInd_row + 1][gridInd_col + 1] == 1:
+        #     obGridLst.append(GridInd(gridInd_row + 1, gridInd_col + 1))
+        #     print('4')
+        #
+        #
+        # if sInd == STCGridInd(5,0,STCVirtualVertType.VLT) and tInd == STCGridInd(5,1,STCVirtualVertType.NoVir):
+        #     print('xxx here')
+        #     print('len_obGridLst = ', len(obGridLst))
+        #     raise Exception('XX')
+        #
+        #
+        # if len(obGridLst) <= 1:
+        #     return True
+        # if len(obGridLst) >= 3:
+        #     return False
+        # # len)(obGridLst == 2
+        # line1 = sympy.Line2D(sympy.Point(sInd.row * 2, sInd.col * 2), sympy.Point(tInd.row * 2, tInd.col * 2))
+        # line2 = sympy.Line2D(sympy.Point(obGridLst[0].row, obGridLst[0].col), sympy.Point(obGridLst[1].row, obGridLst[1].col))
+        #
+        #
+        #
+        # if sympy.Line2D.is_parallel(line1,line2):
+        #     return True
+        # else:
+        #     # print(line1,line2)
+        #     # raise Exception('xx')
+        #     return False
+        #
+        #
+        # # if dir == STCDir.left:
+        # #     if not self.obstacleOccupyDir(sInd, STCDir.left) and not self.obstacleOccupyDir(tInd,STCDir.right):
 
     def countObNum(self, gridIndLst):
         obNum = 0
@@ -323,7 +374,8 @@ class STC_Map(object):
 
 
     def obstacleOccupyDir(self, gridInd: STCGridInd, dir):
-        if gridInd not in self._setSTC:
+        # print(gridInd)
+        if GridInd(gridInd.row,gridInd.col) not in self._setSTC:
             raise Exception('obstacleOccupyDir')
             return False
         vert = self._stcGraph.nodes[gridInd]['vert']
@@ -347,38 +399,47 @@ class STC_Map(object):
                 return True
             else:
                 return False
-
-            pass
+        raise Exception( ' obstacleOccupyDir there is no obstacle')
+            # pass
 
     def gridObstacle(self,gridInd: GridInd):
         if self._mat[gridInd.row][gridInd.col] == 1:
             return True
         else:
             return False
+
+    def gridInd2STCGridInd(self,gridInd: GridInd):
+        _row = floor(gridInd.row/2)
+        _col = floor(gridInd.col/2)
+        if GridInd(_row,_col) in self._vitualIndSet:
+            raise  Exception ('should fix the bug in here gridInd2stcGridInd')
+        else:
+            return STCGridInd(_row,_col,STCVirtualVertType.NoVir)
+
     def __str__(self):
         return "stc_map _s_row = " + str(self._s_row)  +' _s_col = ' + str(self._s_col)
-
 
 
 if __name__ == '__main__':
     ins = MCMPInstance()
     ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
-    mcmp_astc = MCMP_ASTC(ins)
-    mcmp_astc.plan()
-    print(mcmp_astc)
+    stc_map = STC_Map(ins)
+
+    # mcmp_astc.plan()
+    # print(mcmp_astc)
     print('xx')
     # plt.show()
     # print(mcmp_astc._s_map._stcGraph.edges())
     edgeLst = []
-    _graph = mcmp_astc._s_map._stcGraph
-    for edge in mcmp_astc._s_map._stcGraph.edges():
+    _graph = stc_map._stcGraph
+    for edge in stc_map._stcGraph.edges():
         # print(edge)
         sPnt_x = _graph.nodes[edge[0]]['vert']._pos_x
         sPnt_y = _graph.nodes[edge[0]]['vert']._pos_y
         tPnt_x = _graph.nodes[edge[1]]['vert']._pos_x
         tPnt_y = _graph.nodes[edge[1]]['vert']._pos_y
         edgeLst.append((sPnt_x, sPnt_y, tPnt_x, tPnt_y))
-        # raise Exception('xx')
+    #     # raise Exception('xx')
     drawSTCPic(ins, edgePntLst = edgeLst)
 
 

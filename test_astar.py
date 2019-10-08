@@ -58,7 +58,6 @@ class MazeSolver(AStar):
 
     """sample use of the astar algorithm. In this exemple we work on a maze made of ascii characters,
     and a 'node' is just a (x,y) tuple that represents a reachable position"""
-
     def __init__(self, maze):
 
         self.lines = maze.strip().split('\n')
