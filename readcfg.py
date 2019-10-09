@@ -22,7 +22,7 @@ class Read_Cfg:
     '''
     get the list val in txt    
     '''
-    def get(self, str_val ='val' ,ListVal = [],dtype = 'double'):
+    def get(self, str_val ='val' ,ListVal = [],dtype = 'float'):
         ListVal.clear()
         getBoolean = False
         with open(self.fileName)  as txtData:
@@ -37,7 +37,7 @@ class Read_Cfg:
                             if dtype == 'int':
                                 ListVal.append(int(lineData[i]))
                             if dtype == 'float':
-                                ListVal.append(int(lineData[i]))
+                                ListVal.append(float(lineData[i]))
                        getBoolean = True
                        break
                    else:

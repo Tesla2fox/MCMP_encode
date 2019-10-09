@@ -416,6 +416,40 @@ class STC_Map(object):
         else:
             return STCGridInd(_row,_col,STCVirtualVertType.NoVir)
 
+    def verticalDouble(self,sInd:STCGridInd, tInd: STCGridInd):
+        '''
+
+        :param svd: the svd means the vertex out of the graph
+        :param tvd: the tvd means the vertex in the rob graph
+        :return:
+        '''
+        neiLst = self._stcGraph.neighbors(sInd)
+        if tInd not in neiLst:
+            raise Exception('vertical is not adjacent')
+            return False
+
+        if self.obstacleOccupyDir(sInd,STCDir.left):
+            if tInd.row == sInd + 1 and tInd.col == sInd:
+                return True
+            return False
+        if self.obstacleOccupyDir(sInd,STCDir.right):
+            if tInd.row == sInd - 1 and tInd.col == sInd:
+                return True
+            return False
+
+
+        if self.obstacleOccupyDir(sInd,STCDir.top):
+            if tInd.row == sInd and tInd.col == sInd - 1:
+                return True
+            return False
+
+
+        if self.obstacleOccupyDir(sInd,STCDir.bottom):
+            if tInd.row == sInd and tInd.col == sInd + 1:
+                return True
+            return False
+
+
     def __str__(self):
         return "stc_map _s_row = " + str(self._s_row)  +' _s_col = ' + str(self._s_col)
 
