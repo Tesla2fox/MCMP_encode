@@ -2,6 +2,7 @@ import plotly.graph_objects as go
 import plotly
 import numpy as np
 import MCMPinstance
+import  colorlover as cl
 
 class Pnt:
     def __init__(self, x=0, y=0):
@@ -181,6 +182,53 @@ class Env:
                                                  x=x[i], y=y[i],
                                                  text=str(i)))
 
+    def addSTCGraph(self,stcGraphLst):
+        g_color = 'blue'
+        robNum = len(stcGraphLst)
+        if robNum >2 :
+            bupu = cl.scales[str(robNum)]['qual']['Set3']
+        else:
+            bupu = cl.scales[str(3)]['qual']['Set3']
+
+        for robID in range(robNum):
+            stcGraph =  stcGraphLst[robID]
+            for pos in stcGraph:
+                pnt = Pnt(pos[0],pos[1])
+                rect = Rect(pnt,2,2)
+                rectDic = rect.rect2dict()
+                rectDic['line']['color'] = g_color
+                rectDic['line']['width'] = 1
+                rectDic['fillcolor'] = bupu[robID]
+                rectDic['opacity'] = 0.8
+                self._shapeLst.append(rectDic)
+                self._annotationsLst.append(dict(showarrow=False,
+                                                 x=pos[0] + 1,
+                                                 y=pos[1] + 1,
+                                                 text= str(robID)))
+
+    def addSTCNeiGraph(self,stcGraphLst):
+        g_color = 'blue'
+        robNum = len(stcGraphLst)
+        if robNum > 2:
+            bupu = cl.scales[str(robNum)]['qual']['Paired']
+        else:
+            bupu = cl.scales[str(11)]['qual']['Paired']
+        # print(bupu)
+        for robID in range(robNum):
+            stcGraph =  stcGraphLst[robID]
+            for pos in stcGraph:
+                pnt = Pnt(pos[0],pos[1])
+                rect = Rect(pnt,2,2)
+                rectDic = rect.rect2dict()
+                rectDic['line']['color'] = g_color
+                rectDic['line']['width'] = 1
+                rectDic['fillcolor'] = bupu[robID]
+                rectDic['opacity'] = 0.8
+                self._shapeLst.append(rectDic)
+                self._annotationsLst.append(dict(showarrow = False,
+                                                 x = pos[0] + 1,
+                                                 y = pos[1] + 1,
+                                                 text = 'n'+ str(robID)))
 
     def drawPic(self, fileName='env', titleName = None, showBoolean = True,saveBoolean = False,):
         layout = dict()
@@ -256,9 +304,22 @@ def drawSTCPic(ins:MCMPinstance.MCMPInstance, edgePntLst = None):
     env.addgrid()
     env.addEdgesInPnt(edgePntLst)
     env.drawPic(fileName= 'pic')
-    # raise Exception('xx')
 
+def drawSTCGraph(ins:MCMPinstance.MCMPInstance, stcGraphLst = None,
+                 stcNeiGraphLst = None):
+    '''
 
+    :param ins:
+    :param stcGraphLst:
+    :param stcNeiGraphLst:
+    :return:
+    '''
+    env = Env(ins._mat)
+    env.addgrid()
+    env.addRobotStartPnt(ins._robPosLst)
+    env.addSTCGraph(stcGraphLst)
+    env.addSTCNeiGraph(stcNeiGraphLst)
+    env.drawPic(fileName= 'pic')
 
 if __name__ == '__main__':
 

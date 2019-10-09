@@ -3,6 +3,8 @@ from stcMap.stcMap import  STC_Map,GridInd,STCGridInd,STCVertType,STCVert,STCVir
 from MCMPinstance import  MCMPInstance
 import numpy as np
 import networkx as nx
+import  drawEnv
+from drawEnv import  drawSTCGraph
 
 
 class AuctionAlgSTC(object):
@@ -41,6 +43,7 @@ class AuctionAlgSTC(object):
                                                           col = self._robPosLst[robID][1]))
             initCost = self.leafCost(ind)
             self._robEstCostLst[robID] =  initCost
+            self._robSetLst[robID].add(ind)
             self._noBidSet.add(ind)
             self._robStreeLst[robID].add_node(ind)
             self.updateNeiGraphRobID(robID)
@@ -54,9 +57,15 @@ class AuctionAlgSTC(object):
             circleTime += 1
 
             auctioneerRobID = self.selectAuctioneer()
+
             auctionInd,allAssign = self.calAcutionVertID(auctioneerRobID)
+
+
+            print(auctionInd)
+
             winnerRobID, sInd, minCost = self.maxBiddingRob(auctionInd)
-            exit()
+
+
             if self._robSleepLst[auctioneerRobID] == True:
                 continue
             if allAssign == False:
@@ -79,8 +88,9 @@ class AuctionAlgSTC(object):
                     self._haveAuctionInd[auctionInd] = winnerRobID
                     self._robEstCostLst[winnerRobID] = minCost
                     self.updateNeiGraphRobID(winnerRobID)
-
-            if circleTime > 1999:
+            print('circleTime = ', circleTime)
+            print('robSetLst = ', self._robSetLst)
+            if circleTime >= 200:
                 break
             if False not in self._robSleepLst:
                 break
@@ -103,9 +113,10 @@ class AuctionAlgSTC(object):
             if ind in self._haveAuctionInd:
                 inotherSet = True
                 opRobID = self._haveAuctionInd[ind]
-                robOpNeiLst.append((opRobID,ind,self._robEstCostLst[opRobID]))
+                robOpNeiLst.append([opRobID,ind,self._robEstCostLst[opRobID]])
             else:
                 fit = self.calUnOpPriority(auctioneerID,ind)
+                print('fit = ',fit)
                 if self.cmpUnOp(fit,minFit):
                     minFit = fit
                     allAssign = False
@@ -116,21 +127,45 @@ class AuctionAlgSTC(object):
         '''
         end the rule 1 
         '''
-        raise  Exception('end the rule 1')
+        for i in range(len(robOpNeiLst)):
+            minInd,cost = self.calCost(auctioneerID,robOpNeiLst[i][1])
+            robOpNeiLst[i][2] = robOpNeiLst[i][2] - cost
+
+        robOpNeiLst = sorted(robOpNeiLst, key = lambda x :x [2], reverse= True)
+        maxCandi =  robOpNeiLst[0][2]
+        if maxCandi <= 0:
+            self._robSleepLst[auctioneerID] = True
+            return auctionInd, allAssign
+        else:
+            self._robSleepLst[auctioneerID] = False
+
+        for opRobID,ind,cost in robOpNeiLst:
+        # for i in range(len(robOpNeiLst)):
+            if cost <=0:
+                self._robSleepLst[auctioneerID] = True
+                return auctionInd, allAssign
+            else:
+                auctionBool, pri = self.calOpPriority(auctioneerID,opRobID,ind)
+                if auctionBool:
+                    auctionInd = ind
+                    return auctionInd,allAssign
+
+        raise  Exception('end the rule 2')
 
     def maxBiddingRob(self,autionInd:STCGridInd):
         maxBidding = -1
+        costLst = []
+        biddingLst = []
         for robID in range(self._robNum):
             # if autionInd inself._robNeiSetLst[robID]
-            costLst = []
-            biddingLst = []
             sInd,cost = self.calCost(robID, autionInd)
             costLst.append((sInd,cost))
             bidding = 1/cost
             biddingLst.append(bidding)
 
-        maxElement = max(costLst)
-        winnerRobID = costLst.index(maxElement)
+        # print(biddingLst)
+        maxElement = max(biddingLst)
+        winnerRobID = biddingLst.index(maxElement)
         sInd = costLst[winnerRobID][0]
         cost = costLst[winnerRobID][1]
         return winnerRobID,sInd,cost
@@ -143,7 +178,7 @@ class AuctionAlgSTC(object):
         :return:
         '''
         if fit1[0] == fit2[0]:
-            if fit1[1] > fit2[2]:
+            if fit1[1] > fit2[1]:
                 return True
             else:
                 return False
@@ -164,7 +199,8 @@ class AuctionAlgSTC(object):
                 if candinateInd in self._robSetLst[robID]:
                     candValLst.append((candinateInd,self.estAddCost(robID,auctionInd,candinateInd)))
 
-            minInd, minCost = min(candValLst,lambda x: x[1])
+            minInd, minCost = min(candValLst,key = lambda x: x[1])
+            minCost += self._robEstCostLst[robID]
             return minInd, minCost
             # xx
         if auctionInd in self._robSetLst[robID]:
@@ -188,27 +224,35 @@ class AuctionAlgSTC(object):
                 cost  = 2
             else:
                 cost  = 4
-        if self._stcGraph.nodes[sInd]['vert']._type == STCVertType.doubleDiff:
+        if self._stcGraph.nodes[sInd]['vert']._type == STCVertType.doubleDiff or \
+                self._stcGraph.nodes[sInd]['vert']._type == STCVertType.triple:
             cost = 2
         if self._stcGraph.nodes[sInd]['vert']._type == STCVertType.wayVert:
             cost = 4
 
-        if self._stcGraph.nodes[tInd]['vert']._type == STCVertType.doubleSame and degree(xx):
+        if self._stcGraph.nodes[tInd]['vert']._type == STCVertType.doubleSame and self.degree(robID,tInd) == 0:
             cost += 2
-        if self._stcGraph.nodes[tInd]['vert']._type == STCVertType.doubleDiff and degree(xx):
+        if self._stcGraph.nodes[tInd]['vert']._type == STCVertType.doubleDiff and self.degree(robID,tInd) == 0:
             cost += 2
+        # print(self._stcGraph.nodes[sInd]['vert']._type)
         return cost
         # self.estAddCost()
     def plan(self):
-        print(self._s_map)
+        # print(self._s_map)
+        self.auction()
         pass
 
     def calUnOpPriority(self,robID :int ,stcGridInd: STCGridInd):
+        '''
 
+        :param robID:
+        :param stcGridInd:
+        :return: betterLeaf  priority is lower than vertexes which are not fitting the leaf node
+        '''
         # robSet = self._robSetLst[robID]
         fitNess =  0
         for i in range(self._robNum):
-            robSet = self._robSetLst[robID]
+            robSet = self._robSetLst[i]
             if i == robID:
                 continue
             for ind in robSet:
@@ -222,6 +266,24 @@ class AuctionAlgSTC(object):
             betterLeaf = False
         return betterLeaf,fitNess
 
+    def calOpPriority(self,auctioneerRobID: int, opRobID :int, stcGridInd :STCGridInd):
+        robSet = self._robSetLst[opRobID]
+        if stcGridInd in self._noBidSet:
+            return False,np.inf
+        indLst = []
+        for ind in robSet:
+            if stcGridInd == ind:
+                continue
+            indLst.append(ind)
+        if self._s_map.allConnected(indLst):
+            '''
+            此处和文章不符合 需要进行修改
+            '''
+            return True,0
+        else:
+            return False,np.inf
+
+
     def distanceSTCInd(self,sInd,tInd):
         vec1 = np.array([self._stcGraph.nodes[sInd]['vert']._pos_x,self._stcGraph.nodes[sInd]['vert']._pos_y])
         vec2 = np.array([self._stcGraph.nodes[tInd]['vert']._pos_x,self._stcGraph.nodes[tInd]['vert']._pos_y])
@@ -230,7 +292,9 @@ class AuctionAlgSTC(object):
         '''
         return np.linalg.norm(vec1 - vec2, ord = 2)
 
-
+    def degree(self,robID,ind):
+        stree = self._robStreeLst[robID]
+        return stree.in_degree(ind)
 
     def leafCost(self, ind):
         vertType = self._stcGraph.nodes[ind]['vert']._type
@@ -261,7 +325,10 @@ class AuctionAlgSTC(object):
         return False
 
     def loserEarseVert(self,loserID, auctionInd: STCGridInd):
+        robLoserSet = self._robSetLst[loserID]
+        robLoserSet.remove(auctionInd)
 
+        raise Exception("xx")
         pass
 
     def formSpanningTree(self):
@@ -275,6 +342,21 @@ if __name__ == '__main__':
     ins = MCMPInstance()
     ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
     astc = AuctionAlgSTC(ins)
-    astc.auction()
+    astc.plan()
 
+    stcGraphLst = []
+    stcNeiGraphLst = []
+    for robID in range(astc._robNum):
+        _robSet  = astc._robSetLst[robID]
+        _stcGraph = []
+        for stcGridInd in _robSet:
+            _stcGraph.append((stcGridInd.row *2 , stcGridInd.col *2))
+        stcGraphLst.append(_stcGraph)
+        _robNeiSet = astc._robNeiSetLst[robID]
+        _stcNeiGraph =[]
+        for stcGridInd in _robNeiSet:
+            _stcNeiGraph.append((stcGridInd.row *2 , stcGridInd.col *2))
+        stcNeiGraphLst.append(_stcNeiGraph)
+    # print(stcGraphLst)
+    drawSTCGraph(ins,stcGraphLst,stcNeiGraphLst)
     print('xx')

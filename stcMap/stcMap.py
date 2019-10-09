@@ -141,15 +141,13 @@ class STC_Map(object):
             vert = self._stcGraph.nodes[graphInd]['vert']
             if vert._type != STCVertType.obstacle:
                 neiLst = self.getSTCNeighbor(graphInd)
-                print(neiLst)
+                # print(neiLst)
                 # raise Exception('xx')
                 for neiInd in neiLst:
                     self._stcGraph.add_edge(graphInd, neiInd)
-
-        print(self._stcGraph.number_of_edges())
+        # print(self._stcGraph.number_of_edges())
         # print(graphInd)
         # raise  Exception('xx')
-
         # nx.draw(self._stcGraph)
         # print(self._stcGraph)
 
@@ -255,12 +253,12 @@ class STC_Map(object):
 
     def adjacent(self, sInd:STCGridInd, tInd:STCGridInd, dir ):
         if sInd not in self._stcGraph:
-            print(sInd)
+            # print(sInd)
             # raise  Exception('adjacent error')
             return False
         if tInd not in self._stcGraph:
-            print('tInd = ', tInd)
-            print(dir)
+            # print('tInd = ', tInd)
+            # print(dir)
             # raise  Exception('adjacent error')
             return False
         sVert = self._stcGraph.nodes[sInd]['vert']
@@ -269,20 +267,18 @@ class STC_Map(object):
         gridInd_row = int((sVert._pos_x + tVert._pos_x)/2 - 1)
         gridInd_col = int((sVert._pos_y + tVert._pos_y)/2 - 1)
         '''
-        此处存在问题
+        bug fix
         '''
         obGridLst = []
 
-        print('row = ',gridInd_row)
-        print('col = ',gridInd_col)
-        print('sVert._pos_x',sVert._pos_x)
-        print('tVert._pos_x',tVert._pos_x)
-        print('sVert._pos_y',sVert._pos_y)
-        print('tVert._pos_y',tVert._pos_y)
-        print('sInd = ', sInd)
-        print('tInd = ', tInd)
-        # if sInd.row == 5 and sInd.col == 0:
-        #     pass
+        # print('row = ',gridInd_row)
+        # print('col = ',gridInd_col)
+        # print('sVert._pos_x',sVert._pos_x)
+        # print('tVert._pos_x',tVert._pos_x)
+        # print('sVert._pos_y',sVert._pos_y)
+        # print('tVert._pos_y',tVert._pos_y)
+        # print('sInd = ', sInd)
+        # print('tInd = ', tInd)
 
         if dir == STCDir.left:
             if not self.obstacleOccupyDir(sInd,STCDir.left) and not self.obstacleOccupyDir(tInd,STCDir.right):
@@ -429,27 +425,35 @@ class STC_Map(object):
             return False
 
         if self.obstacleOccupyDir(sInd,STCDir.left):
-            if tInd.row == sInd + 1 and tInd.col == sInd:
+            if tInd.row == sInd.row + 1 and tInd.col == sInd.col:
                 return True
             return False
         if self.obstacleOccupyDir(sInd,STCDir.right):
-            if tInd.row == sInd - 1 and tInd.col == sInd:
+            if tInd.row == sInd.row - 1 and tInd.col == sInd.col:
                 return True
             return False
 
 
         if self.obstacleOccupyDir(sInd,STCDir.top):
-            if tInd.row == sInd and tInd.col == sInd - 1:
+            if tInd.row == sInd.row and tInd.col == sInd.col - 1:
                 return True
             return False
 
 
         if self.obstacleOccupyDir(sInd,STCDir.bottom):
-            if tInd.row == sInd and tInd.col == sInd + 1:
+            if tInd.row == sInd.row and tInd.col == sInd.col + 1:
                 return True
             return False
 
-
+    def allConnected(self, gridIndLst: list):
+        if len(gridIndLst) ==1 :
+            return True
+        cg = nx.Graph()
+        for i in range(len(gridIndLst)):
+            for j in range(len(gridIndLst)):
+                if (self.adjacent(gridIndLst[i],gridIndLst[j])):
+                    cg.add_edge((i,j))
+        return nx.is_connected(cg)
     def __str__(self):
         return "stc_map _s_row = " + str(self._s_row)  +' _s_col = ' + str(self._s_col)
 
