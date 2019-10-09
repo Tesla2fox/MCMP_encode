@@ -46,13 +46,44 @@ class AuctionAlgSTC(object):
             self.updateNeiGraphRobID(robID)
             self._haveAuctionInd[ind] = robID
 
+
+        circleTime = 0
+
         while True:
-            auctioneerID = self.selectAuctioneer()
-            auctionInd,allAssign = self.calAcutionVertID(auctioneerID)
-            winnerRobID, sInd, cost = self.maxBiddingRob(auctionInd)
-            if self._robSleepLst[auctioneerID] == True:
+
+            circleTime += 1
+
+            auctioneerRobID = self.selectAuctioneer()
+            auctionInd,allAssign = self.calAcutionVertID(auctioneerRobID)
+            winnerRobID, sInd, minCost = self.maxBiddingRob(auctionInd)
+            exit()
+            if self._robSleepLst[auctioneerRobID] == True:
                 continue
             if allAssign == False:
+                robWinnerSet = self._robSetLst[winnerRobID]
+                robWinnerSet.add(auctionInd)
+                sTree = self._robStreeLst[winnerRobID]
+                sTree.add_edge(auctionInd,sInd)
+                self._haveAuctionInd[auctionInd] = winnerRobID
+                self._robEstCostLst[winnerRobID] = minCost
+                self.updateNeiGraphRobID(winnerRobID)
+                pass
+            else:
+                if auctioneerRobID == winnerRobID:
+                    self.loserEarseVert(self._haveAuctionInd[auctionInd], auctionInd)
+
+                    robWinnerSet = self._robSetLst[winnerRobID]
+                    robWinnerSet.add(auctionInd)
+                    sTree = self._robStreeLst[winnerRobID]
+                    sTree.add_edge(auctionInd, sInd)
+                    self._haveAuctionInd[auctionInd] = winnerRobID
+                    self._robEstCostLst[winnerRobID] = minCost
+                    self.updateNeiGraphRobID(winnerRobID)
+
+            if circleTime > 1999:
+                break
+            if False not in self._robSleepLst:
+                break
 
     def selectAuctioneer(self):
         minEstCost = min(self._robEstCostLst)
@@ -229,6 +260,10 @@ class AuctionAlgSTC(object):
                     robNeiSet.add(neiInd)
         return False
 
+    def loserEarseVert(self,loserID, auctionInd: STCGridInd):
+
+        pass
+
     def formSpanningTree(self):
         pass
 
@@ -240,6 +275,6 @@ if __name__ == '__main__':
     ins = MCMPInstance()
     ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
     astc = AuctionAlgSTC(ins)
-
+    astc.auction()
 
     print('xx')
