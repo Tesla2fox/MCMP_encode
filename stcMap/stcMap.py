@@ -30,6 +30,12 @@ class STCVirtualVertType(Enum):
     VLT = 3
     VRB = 4
 
+class DirType(Enum):
+    left = 0
+    right = 1
+    bottom = 2
+    top = 3
+    center = 4
 
 
 GridInd = namedtuple('GridInd', ['row', 'col'])
@@ -50,6 +56,22 @@ class STCVert(object):
 
     def __str__(self):
         return 'x = ' + str(self._pos_x) + ' y = '+ str(self._pos_y)
+
+
+def getDir(gridInd1: GridInd, gridInd2: GridInd):
+    if gridInd1.row == gridInd2.row:
+        if gridInd1.col == gridInd2.col + 1:
+            return  DirType.bottom
+        if gridInd1.col == gridInd2.col - 1:
+            return  DirType.top
+    if gridInd1.col == gridInd2.col:
+        if gridInd1.row == gridInd2.row + 1:
+            return  DirType.left
+        if gridInd1.row == gridInd2.row - 1:
+            return  DirType.right
+    print(gridInd1,gridInd2)
+    raise Exception('dir error')
+
 
 
 class STC_Map(object):
@@ -103,6 +125,7 @@ class STC_Map(object):
                         vert._pos_y -= 0.1
                         self._stcGraph.add_node(stc_vertInd,vert = vert)
                         self._stcVitualIndSet.add(stc_vertInd)
+                        self._vitualIndSet.add(GridInd(i, j))
                         continue
                     if self._mat[vert._RTInd.row][vert._RTInd.col] == 1 and self._mat[vert._LBInd.row][vert._LBInd.col] == 1:
                         vert._type = STCVertType.doubleDiff
@@ -118,6 +141,8 @@ class STC_Map(object):
                         stc_vertInd = STCGridInd(row= i, col = j, virType = STCVirtualVertType.VRB)
                         self._stcGraph.add_node(stc_vertInd,vert = vert)
                         self._stcVitualIndSet.add(stc_vertInd)
+                        self._vitualIndSet.add(GridInd(i, j))
+
                         continue
                 if obNum == 0 :
                     vert._type = STCVertType.wayVert
@@ -408,6 +433,7 @@ class STC_Map(object):
         _row = floor(gridInd.row/2)
         _col = floor(gridInd.col/2)
         if GridInd(_row,_col) in self._vitualIndSet:
+            # if
             raise  Exception ('should fix the bug in here gridInd2stcGridInd')
         else:
             return STCGridInd(_row,_col,STCVirtualVertType.NoVir)
@@ -454,6 +480,31 @@ class STC_Map(object):
                 if (self.adjacent(gridIndLst[i],gridIndLst[j])):
                     cg.add_edge((i,j))
         return nx.is_connected(cg)
+
+    def baseMapNeighbors(self, node):
+        """ for a given coordinate in the maze, returns up to 4 adjacent(north,east,south,west)
+            nodes that can be reached (=any adjacent coordinate that is not a wall)
+        """
+        x, y = node
+        return[GridInd(nx, ny) for nx, ny in[(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)]if 0 <= nx < self._row and 0 <= ny < self._col]
+
+
+    def obMapNeighbors(self, node):
+        """ for a given coordinate in the maze, returns up to 4 adjacent(north,east,south,west)
+            nodes that can be reached (=any adjacent coordinate that is not a wall)
+        """
+        x, y = node
+        return[GridInd(nx, ny) for nx, ny in[(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)]if 0 <= nx < self._row and 0 <= ny < self._col and self._mat[nx][ny] == 0]
+
+
+    def inSameSTCMegaBox(self,gridInd1: GridInd, gridInd2: GridInd):
+        stcGridInd1 = self.gridInd2STCGridInd(gridInd1)
+        stcGridInd2 = self.gridInd2STCGridInd(gridInd2)
+        if stcGridInd1 ==  stcGridInd2:
+            return True
+        else:
+            return False
+
     def __str__(self):
         return "stc_map _s_row = " + str(self._s_row)  +' _s_col = ' + str(self._s_col)
 

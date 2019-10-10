@@ -141,6 +141,36 @@ class Env:
                                name='Spanning-Tree')
         self._scatterLst.append(markTrace)
 
+    def addMultiEdgesInPnt(self,edgePntLst = []):
+        robNum = len(edgePntLst)
+
+        for robID in range(robNum):
+            mark_x = []
+            mark_y = []
+            lst = edgePntLst[robID]
+            for p in range(len(lst)):
+                pnt0 = Pnt(lst[p][0], lst[p][1])
+                pnt1 = Pnt(lst[p][2], lst[p][3])
+                mark_x.append(pnt0.x)
+                mark_x.append(pnt1.x)
+                mark_y.append(pnt0.y)
+                mark_y.append(pnt1.y)
+                line = Line(pnt0, pnt1)
+                lineDic = line.line2dict()
+                #                print(randColor())
+                lineDic['line']['color'] = 'darkred'
+                # lineDic['line']['color'] = 'rgba(15,15,15,0.5)'
+                lineDic['line']['width'] = 3
+                self._shapeLst.append(lineDic)
+
+            markTrace = go.Scatter(mode='markers',
+                                   x=mark_x,
+                                   y=mark_y,
+                                   marker=dict(size=3),
+                                   name='Spanning-Tree'+ str(robID))
+            self._scatterLst.append(markTrace)
+
+
     def addSinglePathInd(self,pathInd = []):
 
         x = [path_unit[0]+0.5 for path_unit in pathInd]
@@ -199,12 +229,13 @@ class Env:
                 rectDic['line']['color'] = g_color
                 rectDic['line']['width'] = 1
                 rectDic['fillcolor'] = bupu[robID]
-                rectDic['opacity'] = 0.8
+                rectDic['opacity'] = 0.6
                 self._shapeLst.append(rectDic)
-                self._annotationsLst.append(dict(showarrow=False,
-                                                 x=pos[0] + 1,
-                                                 y=pos[1] + 1,
-                                                 text= str(robID)))
+                if True:
+                    self._annotationsLst.append(dict(showarrow=False,
+                                                     x=pos[0] + 1,
+                                                     y=pos[1] + 1,
+                                                     text= str(robID)))
 
     def addSTCNeiGraph(self,stcGraphLst):
         g_color = 'blue'
@@ -223,12 +254,13 @@ class Env:
                 rectDic['line']['color'] = g_color
                 rectDic['line']['width'] = 1
                 rectDic['fillcolor'] = bupu[robID]
-                rectDic['opacity'] = 0.8
+                rectDic['opacity'] = 0.4
                 self._shapeLst.append(rectDic)
-                self._annotationsLst.append(dict(showarrow = False,
-                                                 x = pos[0] + 1,
-                                                 y = pos[1] + 1,
-                                                 text = 'n'+ str(robID)))
+                if True:
+                    self._annotationsLst.append(dict(showarrow = False,
+                                                     x = pos[0] + 1,
+                                                     y = pos[1] + 1,
+                                                     text = 'n'+ str(robID)))
 
     def drawPic(self, fileName='env', titleName = None, showBoolean = True,saveBoolean = False,):
         layout = dict()
@@ -274,7 +306,8 @@ class Env:
         fig = go.Figure(data = self._scatterLst, layout = layout)
 
         if showBoolean:
-            fig.show()
+            plotly.offline.plot(fig, filename= fileName +'.html')
+            # fig.show()
         if saveBoolean:
             fig.write_image( fileName +'.pdf')
 
@@ -306,9 +339,8 @@ def drawSTCPic(ins:MCMPinstance.MCMPInstance, edgePntLst = None):
     env.drawPic(fileName= 'pic')
 
 def drawSTCGraph(ins:MCMPinstance.MCMPInstance, stcGraphLst = None,
-                 stcNeiGraphLst = None):
+                 stcNeiGraphLst = None, edgePntLst = None, multiPath = None):
     '''
-
     :param ins:
     :param stcGraphLst:
     :param stcNeiGraphLst:
@@ -317,9 +349,15 @@ def drawSTCGraph(ins:MCMPinstance.MCMPInstance, stcGraphLst = None,
     env = Env(ins._mat)
     env.addgrid()
     env.addRobotStartPnt(ins._robPosLst)
-    env.addSTCGraph(stcGraphLst)
-    env.addSTCNeiGraph(stcNeiGraphLst)
-    env.drawPic(fileName= 'pic')
+    if stcGraphLst != None:
+        env.addSTCGraph(stcGraphLst)
+    if stcNeiGraphLst != None:
+        env.addSTCNeiGraph(stcNeiGraphLst)
+    if edgePntLst != None:
+        env.addMultiEdgesInPnt(edgePntLst)
+    if multiPath != None:
+        env.addMultiPathInd(multiPath)
+    env.drawPic(fileName= 'realPath2')
 
 if __name__ == '__main__':
 
