@@ -25,6 +25,7 @@ class AuctionAlgSTC(object):
         self._robColLst = ins._robColLst
         self._robReachRowLst = ins._robReachRowLst
         self._robReachColLst = ins._robReachColLst
+
         self._s_map = STC_Map(self._ins)
         self._stcGraph = self._s_map._stcGraph
         self._vitualIndSet = self._s_map._vitualIndSet
@@ -264,13 +265,11 @@ class AuctionAlgSTC(object):
         self.auction()
         a_end = time.clock()
         print('aution used:',a_end - a_start)
-
         eval_start = time.clock()
         self.searchVitualPath()
         self.generateRealPath()
         eval_end = time.clock()
         print('aution used:',eval_end - eval_start)
-
         print('makespan = ', self.calMakespan())
         pass
     def calMakespan(self):

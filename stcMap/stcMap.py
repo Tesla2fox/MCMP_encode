@@ -90,7 +90,6 @@ class STC_Map(object):
 
         self._s_row = ceil(self._row/2)
         self._s_col = ceil(self._col/2)
-
         self._setSTC = set()
         self._indSet = set()
         self._vitualIndSet = set()
@@ -158,7 +157,7 @@ class STC_Map(object):
 
         # print('xx',self._stcGraph.nodes.data())
         # exit()
-
+        self._waySTCNodeNum = self._stcGraph.number_of_nodes()
         for graphInd in self._stcGraph:
             # print(graphInd)
             # print(self._stcGraph.nodes[graphInd]['vert'])
@@ -170,6 +169,9 @@ class STC_Map(object):
                 # raise Exception('xx')
                 for neiInd in neiLst:
                     self._stcGraph.add_edge(graphInd, neiInd)
+            else:
+                self._waySTCNodeNum -= 1
+        # self._waySTCNodeNum =
         # print(self._stcGraph.number_of_edges())
         # print(graphInd)
         # raise  Exception('xx')

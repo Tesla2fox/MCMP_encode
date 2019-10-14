@@ -87,6 +87,7 @@ class Env:
                 self._shapeLst.append(rectDic)
 
     def addRobotStartPnt(self, lst=[]):
+        # print('xxxxx')
         for robID in range(len(lst)):
             startTrace = go.Scatter(x=[lst[robID][0]+0.5], y=[lst[robID][1]+0.5], mode='markers',
                                     marker=dict(symbol='cross-dot', size=20),
@@ -335,6 +336,7 @@ def drawPic(ins: MCMPinstance.MCMPInstance,  singlePathInd = None, edgeLst = Non
 def drawSTCPic(ins:MCMPinstance.MCMPInstance, edgePntLst = None):
     env = Env(ins._mat)
     env.addgrid()
+    env.addRobotStartPnt(ins._robPosLst)
     env.addEdgesInPnt(edgePntLst)
     env.drawPic(fileName= 'pic')
 
@@ -396,7 +398,7 @@ if __name__ == '__main__':
     env = Env(_mat)
     env.addgrid()
     env.addRobotStartPnt(robPosLst)
-    env.drawPic(showBoolean= True, saveBoolean= False)
+    env.drawSTCGraph(showBoolean= True, saveBoolean= False)
     print('ss')
 
 
