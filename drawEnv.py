@@ -367,6 +367,29 @@ def drawSTCGraph(ins:MCMPinstance.MCMPInstance, stcGraphLst = None,
         env.addMultiPathInd(multiPath)
     env.drawPic(fileName= 'realPath2')
 
+
+
+def drawEvalSTCGraph(ins:MCMPinstance.MCMPInstance, stcGraphLst = None,
+                 stcNeiGraphLst = None, edgePntLst = None, multiPath = None):
+    '''
+    :param ins:
+    :param stcGraphLst:
+    :param stcNeiGraphLst:
+    :return:
+    '''
+    env = Env(ins._mat)
+    env.addgrid()
+    env.addRobotStartPnt(ins._robPosLst)
+    if stcGraphLst != None:
+        env.addSTCGraph(stcGraphLst)
+    if stcNeiGraphLst != None:
+        env.addSTCNeiGraph(stcNeiGraphLst)
+    if edgePntLst != None:
+        env.addMultiEdgesInPnt(edgePntLst)
+    if multiPath != None:
+        env.addMultiPathInd(multiPath)
+    env.drawPic(fileName= 'realPath2')
+
 if __name__ == '__main__':
 
     row = 40
@@ -405,6 +428,7 @@ if __name__ == '__main__':
     env.addgrid()
     env.addRobotStartPnt(robPosLst)
     env.drawSTCGraph(showBoolean= True, saveBoolean= False)
+
     print('ss')
 
 

@@ -3,11 +3,12 @@ from stcMap.stcMap import  STC_Map,GridInd,STCGridInd,STCVertType,STCVert,STCVir
     DirType,getDir
 import  random
 from enum import  Enum
-from  drawEnv import drawPic,drawSTCPic,drawSTCGraph
+from  drawEnv import drawPic,drawSTCPic,drawSTCGraph,drawEvalSTCGraph
 from math import floor
 from itertools import chain
 import  networkx as nx
 import  numpy as np
+import  math
 
 class LawnMainDir(Enum):
     right = 1
@@ -86,14 +87,14 @@ class STCEvaluator(object):
 
         print(self._robPatternLst)
 
-        self._robSetLst = [set() for x in range(self._robNum)]
+        self._robSetLst = [[] for x in range(self._robNum)]
         self._robStartSTCIndLst = []
         self._coverSet = set()
 
         for robID in range(self._robNum):
             stc_ind  = self._s_map.gridInd2STCGridInd(GridInd(row = self._robPosLst[robID][0],
                                                           col = self._robPosLst[robID][1]))
-            self._robSetLst[robID].add(stc_ind)
+            self._robSetLst[robID].append(stc_ind)
             self._robStartSTCIndLst.append(stc_ind)
             self._coverSet.add(stc_ind)
 
@@ -106,6 +107,8 @@ class STCEvaluator(object):
         self._robPatternStepLst = [0 for x in range(self._robNum)]
         self._robStreeLst = [nx.Graph() for x in range(self._robNum)]
         self._c_sortPatternIndLst = []
+        self._robEndLst = [False for x in range(self._robNum)]
+
         # for robID,x in enumerate(self._robPatternLst):
         #     # print(x[0])
         #     deg_file.write('robID'+str(robID)+'\n' )
@@ -115,7 +118,7 @@ class STCEvaluator(object):
 
         for robID in range(self._robNum):
             firstOrdPos,patternInd,rob_step = self._robPatternLst[robID][0]
-            firstBool,pos = self.getFirstPosByDis(robID,firstOrdPos)
+            firstBool,p_pos,pos = self.getNextBranchPos(robID,firstOrdPos)
             # c_pos,pos = self.getFirstPos(robID,main_dir,first_dir)
             print('first_pos', pos)
             self._c_sortPatternIndLst.append(patternInd)
@@ -124,9 +127,12 @@ class STCEvaluator(object):
             # self._p_robDirLst.append(first_dir)
             # self._c_mainDirLst.append(main_dir)
             self._robStepLst.append(rob_step)
-            self._robSetLst[robID].add(pos)
-            self._robStreeLst[robID].add_node(pos)
+            self._robSetLst[robID].append(pos)
+            # self._robStreeLst[robID].add_node(pos)
+            self._robStreeLst[robID].add_edge(p_pos,pos)
             self._coverSet.add(pos)
+
+
 
         # raise  Exception('XX')
         # print(self._robPatternLst)
@@ -134,35 +140,43 @@ class STCEvaluator(object):
             # for y in x:
             #     print(y)
         circleTime = 0
-        while True:
+        while False in self._robEndLst:
             for robID in range(self._robNum):
-                # c_pos = self._c_robPosLst[robID]
+                if self._robEndLst[robID]:
+                    continue
                 pos = self.getUncoverPos(robID)
                 if (pos.row == -1 and  pos.col == -1) or self._c_robStepLst[robID] > self._robStepLst[robID]:
                     self._robPatternStepLst[robID] += 1
                     print('robID ', robID, ' PatternStep ', self._robPatternStepLst[robID])
                     robPatternStep = self._robPatternStepLst[robID]
                     firstOrdPos, patternInd, rob_step = self._robPatternLst[robID][robPatternStep]
-                    firstBool, f_pos = self.getFirstPosByDis(robID,firstOrdPos)
+                    firstBool, p_pos,f_pos = self.getNextBranchPos(robID,firstOrdPos)
                     if firstBool:
                         self._coverSet.add(f_pos)
-                        self._robSetLst[robID].add(f_pos)
+                        self._robSetLst[robID].append(f_pos)
                         self._c_robPosLst[robID] = f_pos
                         self._c_sortPatternIndLst[robID] = patternInd
                         self._c_robStepLst[robID] = 0
+                        self._robStreeLst[robID].add_edge(p_pos, f_pos)
                     else:
-                        raise  Exception('xx')
+                        self._robEndLst[robID] = True
+                        # raise  Exception('xx')
                 else:
                     c_pos = self._c_robPosLst[robID]
                     self._robStreeLst[robID].add_edge(c_pos,pos)
                     self._c_robStepLst[robID] += 1
-                    self._robSetLst[robID].add(pos)
+                    self._robSetLst[robID].append(pos)
                     self._c_robPosLst[robID] = pos
                     self._coverSet.add(pos)
+                    print(pos)
             circleTime += 1
-            if circleTime > 300:
+            print('circletime = ',circleTime)
+            # if circleTime == 47:
+            #     print('47')
+            #     pass
+            if circleTime > 200:
                 break
-
+        print('._coverSet = ',len(self._coverSet))
     def getUncoverPos(self,robID):
         c_pos = self._c_robPosLst[robID]
         # c_robDir = self._c_robDirLst[robID]
@@ -177,6 +191,47 @@ class STCEvaluator(object):
                 continue
             return pos
         return pos
+
+    def getNextBranchPos(self,robID, var):
+        base_angle = var * 2 * math.pi
+        robSet = self._robSetLst[robID]
+        robNeiLst = []
+        for stc_ind in robSet:
+            print(stc_ind)
+
+        for stc_ind in robSet:
+            print('stc_ind = ', stc_ind)
+            neiLst = self._stcGraph.neighbors(stc_ind)
+            for neiInd in neiLst:
+                if neiInd not in self._coverSet:
+                    print('neiInd = ',neiInd)
+                    angle = self.calAngle(robID,neiInd)
+                    robNeiLst.append((stc_ind, neiInd, abs(angle -base_angle)))
+                    print(abs(angle -base_angle))
+        robNeiNum  = len(robNeiLst)
+        if robNeiNum != 0 :
+        # print(robNeiSet)
+            robNeiSet = sorted(robNeiLst, key = lambda  x: x[2])
+            resInd = floor(robNeiNum * var)
+            return True,robNeiSet[resInd][0],robNeiSet[resInd][1]
+        else:
+            return False, None, None
+
+
+    def calAngle(self,robID, stc_ind):
+        rob_stc_ind = self._robStartSTCIndLst[robID]
+        base_x = self._stcGraph.nodes[rob_stc_ind]['vert']._pos_x
+        base_y = self._stcGraph.nodes[rob_stc_ind]['vert']._pos_y
+
+        ind_x = self._stcGraph.nodes[stc_ind]['vert']._pos_x
+        ind_y = self._stcGraph.nodes[stc_ind]['vert']._pos_y
+        y = ind_y - base_x
+        x = ind_x - base_x
+
+        if ind_y > base_y:
+            return math.atan2(y,x)
+        else:
+            return math.atan2(y,x) + math.pi
 
     def getFirstPosByDis(self,robID, var):
         robSet = self._robSetLst[robID]
@@ -195,7 +250,6 @@ class STCEvaluator(object):
             return True,robNeiSet[resInd][0]
         else:
             return False, None
-
     def calFirstDis(self,robID,stc_ind):
         dis = 0
         vec_base = np.array([self._stcGraph.nodes[stc_ind]['vert']._pos_x, self._stcGraph.nodes[stc_ind]['vert']._pos_y])
@@ -325,13 +379,13 @@ def stcEvaluator(pop):
 
 if __name__ == '__main__':
     ins = MCMPInstance()
-    ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
+    ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
     # ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r20_c20_p0.9_s1000_Outdoor_Cfg.dat')
     stc_eval = STCEvaluator(ins)
 #
-    random.seed(1)
+    random.seed(2)
     pop = []
-    for i in range(45):
+    for i in range(100):
         pop.append((random.random(),random.random(),random.random()))
     print(pop)
     try:
@@ -351,6 +405,8 @@ if __name__ == '__main__':
     #     # edgeLst.append((t_pos_x, t_pos_y, s_pos_x, s_pos_y))
     #
     #     allEdgeLstPnt.append((sPnt_x, sPnt_y, tPnt_x, tPnt_y))
+    # drawSTCPic(ins,allEdgeLstPnt)
+
     stcGraphLst = []
     allEdgeLstPnt = []
     for robID in range(stc_eval._robNum):
@@ -373,6 +429,6 @@ if __name__ == '__main__':
 
             edgeLst.append((t_pos_x,t_pos_y,s_pos_x,s_pos_y))
         allEdgeLstPnt.append(edgeLst)
-
     # print(stcGraphLst)
-    drawSTCGraph(ins,stcGraphLst= stcGraphLst, edgePntLst = allEdgeLstPnt)
+    drawEvalSTCGraph(ins,stcGraphLst= stcGraphLst, edgePntLst = allEdgeLstPnt)
+    # drawPic(ins)
