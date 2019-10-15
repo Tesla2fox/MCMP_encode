@@ -144,6 +144,11 @@ class Env:
 
     def addMultiEdgesInPnt(self,edgePntLst = []):
         robNum = len(edgePntLst)
+        # robNum = len(stcGraphLst)
+        if robNum >2 :
+            bupu = cl.scales[str(robNum)]['qual']['Dark2']
+        else:
+            bupu = cl.scales[str(3)]['qual']['Dark2']
 
         for robID in range(robNum):
             mark_x = []
@@ -159,7 +164,7 @@ class Env:
                 line = Line(pnt0, pnt1)
                 lineDic = line.line2dict()
                 #                print(randColor())
-                lineDic['line']['color'] = 'darkred'
+                lineDic['line']['color'] = bupu[robID]
                 # lineDic['line']['color'] = 'rgba(15,15,15,0.5)'
                 lineDic['line']['width'] = 3
                 self._shapeLst.append(lineDic)
@@ -167,7 +172,7 @@ class Env:
             markTrace = go.Scatter(mode='markers',
                                    x=mark_x,
                                    y=mark_y,
-                                   marker=dict(size=3),
+                                   marker=dict(size=5),
                                    name='Spanning-Tree'+ str(robID))
             self._scatterLst.append(markTrace)
 
@@ -208,10 +213,11 @@ class Env:
                                    marker=dict(symbol='square-dot', size=20),
                                    name='midPos_' + str(robID) )
             self._scatterLst.append(markTrace)
-            for i in range(len(x)):
-                self._annotationsLst.append(dict(showarrow=False,
-                                                 x=x[i], y=y[i],
-                                                 text=str(i)))
+            if False:
+                for i in range(len(x)):
+                    self._annotationsLst.append(dict(showarrow=False,
+                                                     x=x[i], y=y[i],
+                                                     text=str(i)))
 
     def addSTCGraph(self,stcGraphLst):
         g_color = 'blue'
@@ -232,7 +238,7 @@ class Env:
                 rectDic['fillcolor'] = bupu[robID]
                 rectDic['opacity'] = 0.6
                 self._shapeLst.append(rectDic)
-                if True:
+                if False:
                     self._annotationsLst.append(dict(showarrow=False,
                                                      x=pos[0] + 1,
                                                      y=pos[1] + 1,
@@ -242,9 +248,9 @@ class Env:
         g_color = 'blue'
         robNum = len(stcGraphLst)
         if robNum > 2:
-            bupu = cl.scales[str(robNum)]['qual']['Paired']
+            bupu = cl.scales[str(robNum)]['div']['Paired']
         else:
-            bupu = cl.scales[str(11)]['qual']['Paired']
+            bupu = cl.scales[str(11)]['div']['Paired']
         # print(bupu)
         for robID in range(robNum):
             stcGraph =  stcGraphLst[robID]
@@ -255,7 +261,7 @@ class Env:
                 rectDic['line']['color'] = g_color
                 rectDic['line']['width'] = 1
                 rectDic['fillcolor'] = bupu[robID]
-                rectDic['opacity'] = 0.4
+                rectDic['opacity'] = 0.25
                 self._shapeLst.append(rectDic)
                 if True:
                     self._annotationsLst.append(dict(showarrow = False,
