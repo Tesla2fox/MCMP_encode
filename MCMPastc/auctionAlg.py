@@ -267,9 +267,9 @@ class AuctionAlgSTC(object):
         print('aution used:',a_end - a_start)
         eval_start = time.clock()
         self.searchVitualPath()
-        self.generateRealPath()
         eval_end = time.clock()
         print('aution used:',eval_end - eval_start)
+        self.generateRealPath()
         print('makespan = ', self.calMakespan())
         pass
     def calMakespan(self):
@@ -482,7 +482,6 @@ class AuctionAlgSTC(object):
                                     baseInd = cand
                                     break
                         # if cenDir == DirType.center:
-
                     else:
                         '''
                         end construct vitual path

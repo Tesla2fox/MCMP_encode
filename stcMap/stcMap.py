@@ -498,6 +498,55 @@ class STC_Map(object):
         x, y = node
         return[GridInd(nx, ny) for nx, ny in[(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)]if 0 <= nx < self._row and 0 <= ny < self._col and self._mat[nx][ny] == 0]
 
+    def getNoObNeighborDir(self, lst :GridInd):
+        resLst = []
+        # left
+        lstLeft = GridInd(lst[0] - 1, lst[1])
+        if (lstLeft[0] >= 0):
+            if (self._mat[lstLeft[0]][lstLeft[1]] == 0):
+                resLst.append((DirType.left,lstLeft))
+        # right
+        lstRight = GridInd(lst[0] + 1, lst[1])
+        if (lstRight[0] < self._row):
+            if (self._mat[lstRight[0]][lstRight[1]] == 0):
+                resLst.append((DirType.right,lstRight))
+        # top
+        lstTop = GridInd(lst[0], lst[1] + 1)
+        if (lstTop[1] < self._col):
+            if (self._mat[lstTop[0]][lstTop[1]] == 0):
+                resLst.append((DirType.top,lstTop))
+        # bottom
+        lstBottom = GridInd(lst[0], lst[1] - 1)
+        if (lstBottom[1] >= 0):
+            if (self._mat[lstBottom[0]][lstBottom[1]] == 0):
+                resLst.append((DirType.bottom,lstBottom))
+        return resLst
+
+
+    def getNeighborDir(self, lst :GridInd):
+        resLst = []
+        # left
+        lstLeft = GridInd(lst[0] - 1, lst[1])
+        if (lstLeft[0] >= 0):
+            # if (self._mat[lstLeft[0]][lstLeft[1]] == 0):
+            resLst.append((DirType.left,lstLeft))
+        # right
+        lstRight = GridInd(lst[0] + 1, lst[1])
+        if (lstRight[0] < self._row):
+            # if (self._mat[lstRight[0]][lstRight[1]] == 0):
+            resLst.append((DirType.right,lstRight))
+        # top
+        lstTop = GridInd(lst[0], lst[1] + 1)
+        if (lstTop[1] < self._col):
+            # if (self._mat[lstTop[0]][lstTop[1]] == 0):
+            resLst.append((DirType.top,lstTop))
+        # bottom
+        lstBottom = GridInd(lst[0], lst[1] - 1)
+        if (lstBottom[1] >= 0):
+            # if (self._mat[lstBottom[0]][lstBottom[1]] == 0):
+            resLst.append((DirType.bottom,lstBottom))
+        return resLst
+
 
     def inSameSTCMegaBox(self,gridInd1: GridInd, gridInd2: GridInd):
         stcGridInd1 = self.gridInd2STCGridInd(gridInd1)

@@ -9,6 +9,7 @@ from itertools import chain
 import  networkx as nx
 import  numpy as np
 import  math
+import  time
 
 class LawnMainDir(Enum):
     right = 1
@@ -66,8 +67,9 @@ class STCEvaluator(object):
     def evaluate(self, x):
 
         print('waySTCNodeNum', self._waySTCNodeNum)
-
-
+        self.generateSTree(x)
+        self.generateRealPath()
+    def generateSTree(self,x):
         self._robPatternLst = [[] for x in range(self._robNum)]
         robID = 0
         for ind in x:
@@ -85,7 +87,7 @@ class STCEvaluator(object):
             else:
                 robID += 1
 
-        print(self._robPatternLst)
+        # print(self._robPatternLst)
 
         self._robSetLst = [[] for x in range(self._robNum)]
         self._robStartSTCIndLst = []
@@ -120,7 +122,7 @@ class STCEvaluator(object):
             firstOrdPos,patternInd,rob_step = self._robPatternLst[robID][0]
             firstBool,p_pos,pos = self.getNextBranchPos(robID,firstOrdPos)
             # c_pos,pos = self.getFirstPos(robID,main_dir,first_dir)
-            print('first_pos', pos)
+            # print('first_pos', pos)
             self._c_sortPatternIndLst.append(patternInd)
             self._c_robPosLst.append(pos)
             # self._c_robDirLst.append(first_dir)
@@ -147,7 +149,7 @@ class STCEvaluator(object):
                 pos = self.getUncoverPos(robID)
                 if (pos.row == -1 and  pos.col == -1) or self._c_robStepLst[robID] > self._robStepLst[robID]:
                     self._robPatternStepLst[robID] += 1
-                    print('robID ', robID, ' PatternStep ', self._robPatternStepLst[robID])
+                    # print('robID ', robID, ' PatternStep ', self._robPatternStepLst[robID])
                     robPatternStep = self._robPatternStepLst[robID]
                     firstOrdPos, patternInd, rob_step = self._robPatternLst[robID][robPatternStep]
                     firstBool, p_pos,f_pos = self.getNextBranchPos(robID,firstOrdPos)
@@ -168,9 +170,9 @@ class STCEvaluator(object):
                     self._robSetLst[robID].append(pos)
                     self._c_robPosLst[robID] = pos
                     self._coverSet.add(pos)
-                    print(pos)
+                    # print(pos)
             circleTime += 1
-            print('circletime = ',circleTime)
+            # print('circletime = ',circleTime)
             # if circleTime == 47:
             #     print('47')
             #     pass
@@ -196,18 +198,18 @@ class STCEvaluator(object):
         base_angle = var * 2 * math.pi
         robSet = self._robSetLst[robID]
         robNeiLst = []
-        for stc_ind in robSet:
-            print(stc_ind)
+        # for stc_ind in robSet:
+            # print(stc_ind)
 
         for stc_ind in robSet:
-            print('stc_ind = ', stc_ind)
+            # print('stc_ind = ', stc_ind)
             neiLst = self._stcGraph.neighbors(stc_ind)
             for neiInd in neiLst:
                 if neiInd not in self._coverSet:
-                    print('neiInd = ',neiInd)
+                    # print('neiInd = ',neiInd)
                     angle = self.calAngle(robID,neiInd)
                     robNeiLst.append((stc_ind, neiInd, abs(angle -base_angle)))
-                    print(abs(angle -base_angle))
+                    # print(abs(angle -base_angle))
         robNeiNum  = len(robNeiLst)
         if robNeiNum != 0 :
         # print(robNeiSet)
@@ -369,6 +371,144 @@ class STCEvaluator(object):
         else:
             return False
         # self._coverSet = set()
+    def generateRealPath(self):
+        self._pathPntLst = [[] for x in range(self._robNum)]
+        self._pathLst = [[] for x in range(self._robNum)]
+        for robID in range(self._robNum):
+            path = self._pathLst[robID]
+            pathPnt = self._pathPntLst[robID]
+            pos = self._robStartSTCIndLst[robID]
+            rob_row = self._ins._robRowLst[robID]
+            rob_col = self._ins._robColLst[robID]
+            baseInd = GridInd(rob_row,rob_col)
+            stree = self._robStreeLst[robID]
+
+            robPathSet = set()
+            for stcInd in self._robSetLst[robID]:
+                if stcInd.virType == STCVirtualVertType.NoVir:
+                    robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LBInd)
+                    robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RBInd)
+                    robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LTInd)
+                    robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RTInd)
+                else:
+                    pass
+            cenDir = DirType.left
+            while True:
+                lastInd = baseInd
+                lastDir = cenDir
+                path.append(baseInd)
+                pathPnt.append((baseInd.row + 0.5, baseInd.col + 0.5))
+                # baseNeiLst = self._s_map.baseMapNeighbors(baseInd)
+                stc_ind = self._s_map.gridInd2STCGridInd(baseInd)
+                stcNeiLst = list (stree.neighbors(stc_ind))
+                noIntersectLst = self.intersect(baseInd,stc_ind,stcNeiLst)
+
+                chsSameMega = False
+                candLst = []
+
+                for ind in noIntersectLst:
+                    if ind in path:
+                        continue
+                    if ind not in robPathSet:
+                        continue
+                    if self._s_map.inSameSTCMegaBox(baseInd,ind):
+                        baseInd = ind
+                        chsSameMega = True
+                        break
+                    else:
+                        candLst.append(ind)
+                if not chsSameMega:
+                    if len(candLst) != 0:
+                        # print(cenDir)
+                        # print(candLst)
+                        # print('baseInd', baseInd)
+                        if len(candLst) == 1 :
+                            baseInd = candLst[0]
+                            # print('baseInd', baseInd)
+                        else:
+                            for cand in candLst:
+                                candDir = getDir(baseInd, cand)
+                                if lastDir == candDir:
+                                    baseInd = cand
+                                    break
+                    else:
+                        break
+                        '''
+                        end construct vitual path
+                        '''
+                cenDir = getDir(lastInd,baseInd)
+
+        # print(self._pathLst)
+
+    def intersect(self, baseInd, stc_ind, stcNeiLst):
+
+        noIntersectLst = []
+        baseNeiDirLst = self._s_map.getNeighborDir(baseInd)
+        stcNeiDirLst = []
+        for stcNeiInd in stcNeiLst:
+            stcNeiDir = getDir(stc_ind, stcNeiInd)
+            stcNeiDirLst.append((stcNeiDir,stcNeiInd))
+            if stcNeiInd.virType != STCVirtualVertType.NoVir:
+                print(stcNeiInd)
+                # raise Exception('xx')
+        for baseDir, baseNeiInd in baseNeiDirLst:
+            if baseDir == DirType.left:
+                intersectionBool = False
+                for stcNeiDir,stcNeiInd in stcNeiDirLst:
+                    if stcNeiDir ==  DirType.top:
+                        if  stc_ind.col *2  + 1 < baseInd.col + 0.5< stcNeiInd.col *2 + 1:
+                            if   baseNeiInd.row + 0.5 < stc_ind.row * 2 + 1 < baseInd.row + 0.5:
+                                intersectionBool = True
+                    if stcNeiDir == DirType.bottom:
+                        if   stcNeiInd.col *2 + 1 < baseInd.col + 0.5 <stc_ind.col* 2 + 1:
+                            if   baseNeiInd.row + 0.5 < stc_ind.row * 2 + 1 < baseInd.row + 0.5:
+                                intersectionBool = True
+                if not intersectionBool:
+                    noIntersectLst.append(baseNeiInd)
+
+            if baseDir == DirType.right:
+                intersectionBool = False
+                for stcNeiDir, stcNeiInd in stcNeiDirLst:
+                    if stcNeiDir == DirType.top:
+                        if stc_ind.col * 2 + 1 < baseInd.col + 0.5 < stcNeiInd.col * 2 + 1:
+                            if  baseInd.row + 0.5 < stc_ind.row * 2 + 1 < baseNeiInd.row + 0.5:
+                                intersectionBool = True
+                    if stcNeiDir == DirType.bottom:
+                        if stcNeiInd.col * 2 + 1 < baseInd.col + 0.5 < stc_ind.col * 2 + 1:
+                            if  baseInd.row + 0.5 < stc_ind.row * 2 + 1 < baseNeiInd.row + 0.5:
+                                intersectionBool = True
+                if not intersectionBool:
+                    noIntersectLst.append(baseNeiInd)
+
+            if baseDir == DirType.top:
+                intersectionBool = False
+                for stcNeiDir, stcNeiInd in stcNeiDirLst:
+                    if stcNeiDir == DirType.left:
+                        if stcNeiInd.row*2 + 1 < baseInd.row + 0.5 < stc_ind.row * 2+ 1:
+                            if baseInd.col + 0.5 < stc_ind.col*2 + 1 < baseNeiInd.col + 0.5:
+                                intersectionBool = True
+                    if stcNeiDir == DirType.right:
+                        if  stc_ind.row * 2 + 1 < baseInd.row + 0.5 <  stcNeiInd.row * 2 + 1:
+                            if baseInd.col + 0.5 < stc_ind.col * 2 + 1 < baseNeiInd.col + 0.5:
+                                intersectionBool = True
+                if not intersectionBool:
+                    noIntersectLst.append(baseNeiInd)
+
+            if baseDir == DirType.bottom:
+                intersectionBool = False
+                for stcNeiDir, stcNeiInd in stcNeiDirLst:
+                    if stcNeiDir == DirType.left:
+                        if stcNeiInd.row * 2 + 1 < baseInd.row + 0.5 < stc_ind.row * 2 + 1:
+                            if  baseNeiInd.col  + 0.5 < stc_ind.col * 2 + 1 < baseInd.col + 0.5:
+                                intersectionBool = True
+                    if stcNeiDir == DirType.right:
+                        if stc_ind.row * 2 + 1 < baseInd.row + 0.5< stcNeiInd.row * 2 + 1:
+                            if  baseNeiInd.col + 0.5< stc_ind.col * 2 + 1 <  baseInd.col + 0.5:
+                                intersectionBool = True
+                if not intersectionBool:
+                    noIntersectLst.append(baseNeiInd)
+        return noIntersectLst
+
 
 def stcEvaluator(pop):
     fitness  = 0
@@ -379,17 +519,19 @@ def stcEvaluator(pop):
 
 if __name__ == '__main__':
     ins = MCMPInstance()
-    ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
+    ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
     # ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r20_c20_p0.9_s1000_Outdoor_Cfg.dat')
     stc_eval = STCEvaluator(ins)
-#
     random.seed(2)
     pop = []
     for i in range(100):
         pop.append((random.random(),random.random(),random.random()))
-    print(pop)
+    # print(pop)
     try:
+        e_start = time .clock()
         stc_eval.evaluate(pop)
+        e_end = time .clock()
+        print('evaluate time = ', e_end - e_start)
     except Exception as e:
         print(e)
         pass
@@ -430,5 +572,5 @@ if __name__ == '__main__':
             edgeLst.append((t_pos_x,t_pos_y,s_pos_x,s_pos_y))
         allEdgeLstPnt.append(edgeLst)
     # print(stcGraphLst)
-    drawEvalSTCGraph(ins,stcGraphLst= stcGraphLst, edgePntLst = allEdgeLstPnt)
+    drawEvalSTCGraph(ins,stcGraphLst= stcGraphLst, edgePntLst = allEdgeLstPnt, multiPath= stc_eval._pathLst)
     # drawPic(ins)
