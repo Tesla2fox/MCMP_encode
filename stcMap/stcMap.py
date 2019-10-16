@@ -435,7 +435,6 @@ class STC_Map(object):
         _row = floor(gridInd.row/2)
         _col = floor(gridInd.col/2)
         if GridInd(_row,_col) in self._vitualIndSet:
-            # if
             raise  Exception ('should fix the bug in here gridInd2stcGridInd')
         else:
             return STCGridInd(_row,_col,STCVirtualVertType.NoVir)
@@ -549,9 +548,14 @@ class STC_Map(object):
 
 
     def inSameSTCMegaBox(self,gridInd1: GridInd, gridInd2: GridInd):
-        stcGridInd1 = self.gridInd2STCGridInd(gridInd1)
-        stcGridInd2 = self.gridInd2STCGridInd(gridInd2)
-        if stcGridInd1 ==  stcGridInd2:
+        # stcGridInd1 = self.gridInd2STCGridInd(gridInd1)
+        # stcGridInd2 = self.gridInd2STCGridInd(gridInd2)
+        _row1 = floor(gridInd1.row/2)
+        _col1 = floor(gridInd1.col/2)
+        _row2 = floor(gridInd2.row/2)
+        _col2 = floor(gridInd2.col/2)
+        if _row1 == _row2 and _col1 == _col2:
+        # if stcGridInd1 ==  stcGridInd2:
             return True
         else:
             return False

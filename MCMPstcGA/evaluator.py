@@ -10,6 +10,8 @@ import  networkx as nx
 import  numpy as np
 import  math
 import  time
+from MCMPastar import MCMP_Solver,STC_ASTAR
+
 
 class LawnMainDir(Enum):
     right = 1
@@ -65,10 +67,18 @@ class STCEvaluator(object):
         pass
 
     def evaluate(self, x):
-
-        print('waySTCNodeNum', self._waySTCNodeNum)
+        # print('waySTCNodeNum', self._waySTCNodeNum)
+        # print(x)
         self.generateSTree(x)
-        self.generateRealPath()
+        if len(self._coverSet) == self._waySTCNodeNum:
+            self.generateVirtualPath()
+            self.generateRealPath()
+            makespan = self.calMakespan()
+            return True,makespan
+        else:
+            return False,np.inf
+        # return makespan
+
     def generateSTree(self,x):
         self._robPatternLst = [[] for x in range(self._robNum)]
         robID = 0
@@ -178,7 +188,8 @@ class STCEvaluator(object):
             #     pass
             if circleTime > 200:
                 break
-        print('._coverSet = ',len(self._coverSet))
+        # print('._coverSet = ',len(self._coverSet))
+
     def getUncoverPos(self,robID):
         c_pos = self._c_robPosLst[robID]
         # c_robDir = self._c_robDirLst[robID]
@@ -372,16 +383,81 @@ class STCEvaluator(object):
             return False
         # self._coverSet = set()
     def generateRealPath(self):
+
+        # _mcmp_astar = MCMP_Solver(self._ins)
         self._pathPntLst = [[] for x in range(self._robNum)]
         self._pathLst = [[] for x in range(self._robNum)]
+
+
+        # print(self._leafVirSetLst)
+        # raise Exception('xx')
         for robID in range(self._robNum):
             path = self._pathLst[robID]
             pathPnt = self._pathPntLst[robID]
+            virPath = self._virPathLst[robID]
+
+            leafVirLst = self._leafVirSetLst[robID]
+            roadPath = []
+            for vrow,vcol in virPath:
+                if self._mat[vrow][vcol] == 0:
+                    roadPath.append((vrow,vcol))
+            stc_astar = STC_ASTAR(self._ins,roadPath)
+            currentPos = virPath[0]
+            path.append(currentPos)
+            for i in range(1,len(virPath)):
+                nextPos = virPath[i]
+                if self._mat[nextPos.row][nextPos.col] == 1:
+                    #is obstacle
+                    continue
+
+                neiLst = self._s_map.obMapNeighbors(currentPos)
+                if len(leafVirLst) != 0:
+                    removeBool = False
+                    for leafInd in leafVirLst:
+                        # print(leafInd)
+                        if leafInd in neiLst:
+                            # print(leafInd)
+                            path.append(leafInd)
+                            path.append(currentPos)
+                            removeBool = True
+                            break
+                    if removeBool:
+                        leafVirLst.remove(leafInd)
+
+                if nextPos in neiLst:
+                    currentPos = nextPos
+                    path.append(nextPos)
+                else:
+                    a_path = list(stc_astar.astar(currentPos,nextPos))
+                    currentPos = nextPos
+                    path.extend(a_path)
+        # print(self._pathLst)
+
+    def generateVirtualPath(self):
+        self._virPathPntLst = [[] for x in range(self._robNum)]
+        self._virPathLst = [[] for x in range(self._robNum)]
+        self._leafVirSetLst = [[] for x in range(self._robNum)]
+        for robID in range(self._robNum):
+            path = self._virPathLst[robID]
+            pathPnt = self._virPathPntLst[robID]
             pos = self._robStartSTCIndLst[robID]
             rob_row = self._ins._robRowLst[robID]
             rob_col = self._ins._robColLst[robID]
             baseInd = GridInd(rob_row,rob_col)
             stree = self._robStreeLst[robID]
+
+            # '''
+            # 暂时调试方便
+            # '''
+            #
+            removeLst = []
+            leafVirLst = self._leafVirSetLst[robID]
+            for streeInd in stree:
+                if streeInd in self._stcVitualIndSet and stree.degree(streeInd) == 1:
+                    removeLst.append(streeInd)
+            for streeInd in removeLst:
+                stree.remove_node(streeInd)
+                leafVirLst.append(self.getVirBaseInd(streeInd))
 
             robPathSet = set()
             for stcInd in self._robSetLst[robID]:
@@ -391,8 +467,15 @@ class STCEvaluator(object):
                     robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LTInd)
                     robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RTInd)
                 else:
+                    if stree.degree(stcInd) == 2:
+                        raise Exception('xx')
+                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LBInd)
+                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RBInd)
+                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LTInd)
+                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RTInd)
                     pass
-            cenDir = DirType.left
+            cenDir = DirType.center
+
             while True:
                 lastInd = baseInd
                 lastDir = cenDir
@@ -402,10 +485,8 @@ class STCEvaluator(object):
                 stc_ind = self._s_map.gridInd2STCGridInd(baseInd)
                 stcNeiLst = list (stree.neighbors(stc_ind))
                 noIntersectLst = self.intersect(baseInd,stc_ind,stcNeiLst)
-
                 chsSameMega = False
                 candLst = []
-
                 for ind in noIntersectLst:
                     if ind in path:
                         continue
@@ -430,18 +511,20 @@ class STCEvaluator(object):
                                 candDir = getDir(baseInd, cand)
                                 if lastDir == candDir:
                                     baseInd = cand
+                                    # if lastDir ==
                                     break
+
+                            if lastDir == DirType.center:
+                                baseInd = candLst[-1]
+                                # print(baseInd)
                     else:
                         break
                         '''
                         end construct vitual path
                         '''
                 cenDir = getDir(lastInd,baseInd)
-
         # print(self._pathLst)
-
     def intersect(self, baseInd, stc_ind, stcNeiLst):
-
         noIntersectLst = []
         baseNeiDirLst = self._s_map.getNeighborDir(baseInd)
         stcNeiDirLst = []
@@ -508,33 +591,59 @@ class STCEvaluator(object):
                 if not intersectionBool:
                     noIntersectLst.append(baseNeiInd)
         return noIntersectLst
+    def getVirBaseInd(self,stc_ind:STCGridInd):
+        if stc_ind.virType == STCVirtualVertType.VLB:
+            return self._stcGraph.nodes[stc_ind]['vert']._LBInd
+        if stc_ind.virType == STCVirtualVertType.VLT:
+            return self._stcGraph.nodes[stc_ind]['vert']._LTInd
+        if stc_ind.virType == STCVirtualVertType.VRB:
+            return self._stcGraph.nodes[stc_ind]['vert']._RBInd
+        if stc_ind.virType == STCVirtualVertType.VRT:
+            return self._stcGraph.nodes[stc_ind]['vert']._RTInd
 
 
-def stcEvaluator(pop):
-    fitness  = 0
-    for ind in pop:
-        for x in ind:
-            fitness += x
-    return fitness
+    def calMakespan(self):
+        maxPath = max(self._pathLst, key =  lambda x: len(x))
+        return len(maxPath)
+
+# def stcEvaluator(pop):
+#     fitness  = 0
+#     for ind in pop:
+#         for x in ind:
+#             fitness += x
+#     return fitness
 
 if __name__ == '__main__':
     ins = MCMPInstance()
-    ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
+    ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
     # ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r20_c20_p0.9_s1000_Outdoor_Cfg.dat')
     stc_eval = STCEvaluator(ins)
-    random.seed(2)
-    pop = []
-    for i in range(100):
-        pop.append((random.random(),random.random(),random.random()))
+
+    # random.seed(6)
+    # pop = []
+    # for i in range(100):
+    #     pop.append((random.random(),random.random(),random.random()))
+
+    for seed in range(100):
+        random.seed(seed)
+        print(seed)
+        pop = []
+        for i in range(100):
+            pop.append((random.random(),random.random(),random.random()))
     # print(pop)
-    try:
         e_start = time .clock()
-        stc_eval.evaluate(pop)
+        makespan = stc_eval.evaluate(pop)
+        print('makespan = ', makespan)
         e_end = time .clock()
         print('evaluate time = ', e_end - e_start)
-    except Exception as e:
-        print(e)
-        pass
+    # try:
+    #     e_start = time .clock()
+    #     stc_eval.evaluate(pop)
+    #     e_end = time .clock()
+    #     print('evaluate time = ', e_end - e_start)
+    # except Exception as e:
+    #     print(e)
+    #     pass
 
     # allEdgeLstPnt = []
     # _graph = stc_eval._stcGraph
@@ -548,7 +657,6 @@ if __name__ == '__main__':
     #
     #     allEdgeLstPnt.append((sPnt_x, sPnt_y, tPnt_x, tPnt_y))
     # drawSTCPic(ins,allEdgeLstPnt)
-
     stcGraphLst = []
     allEdgeLstPnt = []
     for robID in range(stc_eval._robNum):
@@ -572,5 +680,6 @@ if __name__ == '__main__':
             edgeLst.append((t_pos_x,t_pos_y,s_pos_x,s_pos_y))
         allEdgeLstPnt.append(edgeLst)
     # print(stcGraphLst)
+    # drawEvalSTCGraph(ins,stcGraphLst= stcGraphLst, edgePntLst = allEdgeLstPnt)
     drawEvalSTCGraph(ins,stcGraphLst= stcGraphLst, edgePntLst = allEdgeLstPnt, multiPath= stc_eval._pathLst)
     # drawPic(ins)

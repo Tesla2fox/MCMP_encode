@@ -530,8 +530,8 @@ class AuctionAlgSTC(object):
 
 if __name__ == '__main__':
     ins = MCMPInstance()
-    # ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
-    ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r20_c20_p0.9_s1000_Outdoor_Cfg.dat')
+    ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
+    # ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r20_c20_p0.9_s1000_Outdoor_Cfg.dat')
     astc = AuctionAlgSTC(ins)
     astc.plan()
     # try:

@@ -34,19 +34,24 @@ def cxExponential(x, y, cr):
             break
     return x
 
+# def fixGene(x):
+#
+#     if not (0<= x[0] <= 1):
+#         raise  Exception('XX')
+#     if not (0<= x[0] <= 1)
+
 
 def initOperator():
     # creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     creator.create("Individual", array.array, typecode='d')
-
     toolbox = base.Toolbox()
-    toolbox.register("attr_float", random.uniform, -3, 3)
-    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, 2)
+    toolbox.register("attr_float", random.random)
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, 3)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("mutate", mutDE, f=0.8)
     toolbox.register("select", tools.selRandom, k=3)
     toolbox.register("mate", cxExponential, cr=0.8)
-
+    # toolbox.register("fixGene",)
     print('init operator')
     return toolbox
 
@@ -63,9 +68,12 @@ def getOffPop(pop,toolbox):
         y = toolbox.mutate(y,a,b,c)
         z = toolbox.mate(x,y)
         # z = toolbox.mate(x, y)
+        if not (0<= z[1]<= 1):
+            z[1] = random.random()
+        if not (0<= z[0] <= 1):
+            z[0] = random.random()
         offPop.append(z)
         # print(y)
-
     return offPop
         # index =
 

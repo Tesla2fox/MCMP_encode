@@ -4,6 +4,7 @@ import math
 from MCMPinstance import MCMPInstance
 # import drawEnv
 from drawEnv import drawPic
+import numpy as np
 
 class MCMP_Solver(AStar):
 
@@ -32,6 +33,14 @@ class MCMP_Solver(AStar):
 
     def __str__(self):
         return 'mcmp_astar row = '  + str(self._row) + ' col = ' + str(self._col)
+
+class STC_ASTAR(MCMP_Solver):
+    def __init__(self,ins:MCMPInstance, graphIndLst = []):
+        super(STC_ASTAR,self).__init__(ins)
+        self._mat = np.ones((self._row,self._col))
+        for grow,gcol in graphIndLst:
+            self._mat[grow][gcol] = 0
+
 
 
 

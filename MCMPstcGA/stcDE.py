@@ -1,5 +1,5 @@
 
-
+from MCMPinstance import MCMPInstance
 import random
 import copy
 from deap import base
@@ -7,7 +7,7 @@ from deap import creator
 from deap import tools
 from MCMPstcGA.operaterDE import  initOperator,getOffPop
 from enum import Enum
-from MCMPstcGA.evaluator import stcEvaluator
+from MCMPstcGA.evaluator import STCEvaluator
 
 class updateType(Enum):
     insert = 0
@@ -35,26 +35,31 @@ def deletePop(pop):
 
 if __name__ == '__main__':
     print('xxx')
-    random.seed(1)
+
+    ins = MCMPInstance()
+    ins.loadCfg('D:\\pycode\\MCMP_encode\\benchmark\\r2_r40_c20_p0.9_s1000_Outdoor_Cfg.dat')
+    # ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r20_c20_p0.9_s1000_Outdoor_Cfg.dat')
+    stc_eval = STCEvaluator(ins)
+    # random.seed(1)
     toolbox = initOperator()
-    pop = toolbox.population(10)
-    fitness = stcEvaluator(pop)
+    pop = toolbox.population(100)
+    fitBool, fitness = stc_eval.evaluate(pop)
     print(pop)
-    maxEvaluationTimes = 100
+    maxEvaluationTimes = 2000
     evaluationTimes = 0
     endBool = False
     while True:
         subPop = getOffPop(pop, toolbox)
         for k,ind in enumerate(subPop):
             insPop = insertPop(pop,ind)
-            insFitness = stcEvaluator(insPop)
+            insBool, insFitness = stc_eval.evaluate(insPop)
             repPop = replacePop(pop,ind)
-            repFitness = stcEvaluator(repPop)
+            repBool, repFitness = stc_eval.evaluate(repPop)
             delPop = deletePop(pop)
-            delFitness = stcEvaluator(delPop)
+            delBool, delFitness = stc_eval.evaluate(delPop)
             fitnessLst = [insFitness - fitness, repFitness - fitness, delFitness - fitness]
             minFitness = min(fitnessLst)
-            if minFitness <= 0:
+            if minFitness < 0:
                 minIndex  = fitnessLst.index(minFitness)
                 # fitness = minFitness
                 if minIndex == 0:
