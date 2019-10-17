@@ -9,7 +9,7 @@ CPP 指代coverage path planning
 """
     
 
-def writeConf(fcon = open('text.txt', 'w'),name = '0-0',data = []):
+def writeConf(fcon ,name = '0-0',data = []):
     fcon.write(name+' ')
     for unit in data:
         fcon.write(' '+ str(unit))

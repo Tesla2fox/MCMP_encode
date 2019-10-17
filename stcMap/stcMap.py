@@ -8,6 +8,14 @@ import sympy
 from  drawEnv import drawPic,drawSTCPic
 
 
+
+
+
+class VirConnectError(Exception):
+    def __init__(self):
+        super(VirConnectError,self).__init__()
+        # self.n=n
+
 class STCVertType(Enum):
     wayVert = 0
     single = 1
@@ -36,6 +44,7 @@ class DirType(Enum):
     bottom = 2
     top = 3
     center = 4
+    virConnect = 5
 
 
 GridInd = namedtuple('GridInd', ['row', 'col'])
@@ -69,8 +78,10 @@ def getDir(gridInd1: GridInd, gridInd2: GridInd):
             return  DirType.left
         if gridInd1.row == gridInd2.row - 1:
             return  DirType.right
-    print(gridInd1,gridInd2)
-    raise Exception('dir error')
+    # print(gridInd1,gridInd2)
+    if abs(gridInd1.row - gridInd2.row) == 2 and abs(gridInd1.col - gridInd2.col) == 2:
+        raise VirConnectError
+    raise Exception('Dir')
 
 
 

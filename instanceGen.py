@@ -38,15 +38,15 @@ def getNeighbor(envMat,lst = (0,0),row =20, col =20):
 if __name__ == '__main__':
     print('the generator')
 
-    row = 40
-    col = 20
-    robNum = 2
-    p = np.array([0.9,0.1])
+    row = 50
+    col = 50
+    robNum = 4
+    p = np.array([0.8,0.2])
     r_seed = 1000
     np.random.seed(r_seed)
 
-    rob_row_lst = np.random.randint(20,size = robNum)
-    rob_col_lst = np.random.randint(20,size = robNum)
+    rob_row_lst = np.random.randint(row,size = robNum)
+    rob_col_lst = np.random.randint(col,size = robNum)
 
     robPosLst = []
     for i in range(robNum):
