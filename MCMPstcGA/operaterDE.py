@@ -43,7 +43,7 @@ def cxExponential(x, y, cr):
 
 def initOperator():
     # creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-    creator.create("Individual", array.array, typecode='d')
+    creator.create("Individual", list)
     toolbox = base.Toolbox()
     toolbox.register("attr_float", random.random)
     toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, 3)
