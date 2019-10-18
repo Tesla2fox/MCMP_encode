@@ -78,9 +78,13 @@ def getDir(gridInd1: GridInd, gridInd2: GridInd):
             return  DirType.left
         if gridInd1.row == gridInd2.row - 1:
             return  DirType.right
-    # print(gridInd1,gridInd2)
     if abs(gridInd1.row - gridInd2.row) == 2 and abs(gridInd1.col - gridInd2.col) == 2:
+        return  DirType.virConnect
         raise VirConnectError
+    if abs(gridInd1.row - gridInd2.row) == 1 and abs(gridInd1.col - gridInd2.col) == 1:
+        return  DirType.virConnect
+        raise VirConnectError
+    print(gridInd1,gridInd2)
     raise Exception('Dir')
 
 
@@ -446,7 +450,17 @@ class STC_Map(object):
         _row = floor(gridInd.row/2)
         _col = floor(gridInd.col/2)
         if GridInd(_row,_col) in self._vitualIndSet:
-            raise  Exception ('should fix the bug in here gridInd2stcGridInd')
+            if self._mat[gridInd.row][gridInd.col] == 1:
+                raise  Exception ('should fix the bug in here gridInd2stcGridInd')
+            else:
+                if gridInd.row == _row * 2 and gridInd.col == _col *2:
+                    return STCGridInd(_row,_col,STCVirtualVertType.VLB)
+                if gridInd.row == _row * 2 + 1 and gridInd.col == _col *2 + 1:
+                    return STCGridInd(_row,_col,STCVirtualVertType.VRT)
+                if gridInd.row == _row * 2 and gridInd.col ==_col *2 + 1:
+                    return STCGridInd(_row,_col,STCVirtualVertType.VLT)
+                if gridInd.row == _row * 2 + 1 and gridInd.col == _col *2:
+                    return STCGridInd(_row,_col,STCVirtualVertType.VRB)
         else:
             return STCGridInd(_row,_col,STCVirtualVertType.NoVir)
 

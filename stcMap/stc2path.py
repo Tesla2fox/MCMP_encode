@@ -50,7 +50,6 @@ class STC2Path(object):
         self._pathPntLst = [[] for x in range(self._robNum)]
         self._pathLst = [[] for x in range(self._robNum)]
 
-
         # print(self._leafVirSetLst)
         # raise Exception('xx')
         for robID in range(self._robNum):
@@ -112,18 +111,9 @@ class STC2Path(object):
             # 暂时调试方便
             # '''
             #
-            removeLst = []
-            leafVirLst = self._leafVirSetLst[robID]
-            for streeInd in stree:
-                if streeInd in self._stcVitualIndSet and stree.degree(streeInd) == 1:
-                    removeLst.append(streeInd)
-            for streeInd in removeLst:
-                stree.remove_node(streeInd)
-                leafVirLst.append(self.getVirBaseInd(streeInd))
 
             self._reDefineNeighborAdd = dict()
             self._reDefineNeighborRemove = dict()
-
             robPathSet = set()
             for stcInd in self._robSetLst[robID]:
                 if stcInd.virType == STCVirtualVertType.NoVir:
@@ -134,12 +124,50 @@ class STC2Path(object):
                 else:
                     if stree.degree(stcInd) == 2:
                         # raise Exception('xx')
-                        self.reDefineNeighbor(stcInd)
-                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LBInd)
-                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RBInd)
-                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LTInd)
-                        robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RTInd)
+                        reDefineSp = False
+                        for nei in stree.neighbors(stcInd):
+                            if  nei.virType != STCVirtualVertType.NoVir:
+                                stcNeiLst = list(stree.neighbors(stcInd))
+                                stcNeiLst.remove(nei)
+                                self.reDefineNeighborSp(stcInd,stcNeiLst[0])
+                                reDefineSp = True
+                                break
+                        if not reDefineSp:
+                            self.reDefineNeighbor(stcInd)
+                        if stcInd.virType == STCVirtualVertType.VLB:
+                            robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LBInd)
+                        if stcInd.virType == STCVirtualVertType.VRB:
+                            robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RBInd)
+                        if stcInd.virType == STCVirtualVertType.VLT:
+                            robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LTInd)
+                        if stcInd.virType == STCVirtualVertType.VRT:
+                            robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RTInd)
+                    # if stree.degree(stcInd) == 1:
+                    #     for nei in stree.neighbors(stcInd):
+                    #         if nei in self._stcVitualIndSet and stree.degree(nei) == 2:
+                    #             if stcInd.virType == STCVirtualVertType.VLB:
+                    #                 robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LBInd)
+                    #             if stcInd.virType == STCVirtualVertType.VRB:
+                    #                 robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RBInd)
+                    #             if stcInd.virType == STCVirtualVertType.VLT:
+                    #                 robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._LTInd)
+                    #             if stcInd.virType == STCVirtualVertType.VRT:
+                    #                 robPathSet.add(self._stcGraph.nodes[stcInd]['vert']._RTInd)
                     pass
+            removeLst = []
+            leafVirLst = self._leafVirSetLst[robID]
+            for streeInd in stree:
+                if streeInd in self._stcVitualIndSet and stree.degree(streeInd) == 1:
+                    removeLst.append(streeInd)
+                    # for nei in stree.neighbors(streeInd):
+                    #     if nei in self._stcVitualIndSet and stree.degree(nei) == 2:
+                    #         pass
+                    #     else:
+                    #         removeLst.append(streeInd)
+            for streeInd in removeLst:
+                stree.remove_node(streeInd)
+                leafVirLst.append(self.getVirBaseInd(streeInd))
+            # print('robid =',robID, '  ',self._reDefineNeighborAdd)
             cenDir = DirType.center
 
             while True:
@@ -150,7 +178,10 @@ class STC2Path(object):
                 # baseNeiLst = self._s_map.baseMapNeighbors(baseInd)
                 stc_ind = self._s_map.gridInd2STCGridInd(baseInd)
                 stcNeiLst = list (stree.neighbors(stc_ind))
+                if baseInd.row == 18 and baseInd.col == 3:
+                    print(baseInd)
                 noIntersectLst = self.intersect(baseInd,stc_ind,stcNeiLst)
+
                 chsSameMega = False
                 candLst = []
                 for ind in noIntersectLst:
@@ -179,7 +210,9 @@ class STC2Path(object):
                                     baseInd = cand
                                     # if lastDir ==
                                     break
-
+                                if candDir == DirType.virConnect:
+                                    baseInd = cand
+                                    break
                             if lastDir == DirType.center:
                                 baseInd = candLst[-1]
                                 # print(baseInd)
@@ -188,28 +221,32 @@ class STC2Path(object):
                         '''
                         end construct vitual path
                         '''
-                try:
-                    cenDir = getDir(lastInd,baseInd)
-                except VirConnectError as e:
-                    cenDir = DirType.virConnect
+                # try:
+                cenDir = getDir(lastInd,baseInd)
+            # break
+                # except VirConnectError as e:
+                #     cenDir = DirType.virConnect
         # print(self._pathLst)
     def intersect(self, baseInd, stc_ind, stcNeiLst):
         noIntersectLst = []
         baseNeiDirLst = self._s_map.getNeighborDir(baseInd)
         if baseInd in self._reDefineNeighborAdd:
-            for baseNei in baseNeiDirLst:
-                if baseNei[1] == self._reDefineNeighborRemove[baseInd]:
-                    break
-            baseNeiDirLst.remove(baseNei)
+            if baseInd in self._reDefineNeighborRemove:
+                removeBool = False
+                for baseNei in baseNeiDirLst:
+                    if baseNei[1] == self._reDefineNeighborRemove[baseInd]:
+                        removeBool = True
+                        break
+                if removeBool:
+                    baseNeiDirLst.remove(baseNei)
             baseNeiDirLst.append((DirType.virConnect, self._reDefineNeighborAdd[baseInd]))
-            print(baseNeiDirLst)
-
+            # print(baseNeiDirLst)
         stcNeiDirLst = []
         for stcNeiInd in stcNeiLst:
             stcNeiDir = getDir(stc_ind, stcNeiInd)
             stcNeiDirLst.append((stcNeiDir,stcNeiInd))
-            if stcNeiInd.virType != STCVirtualVertType.NoVir:
-                print(stcNeiInd)
+            # if stcNeiInd.virType != STCVirtualVertType.NoVir:
+            #     print(stcNeiInd)
                 # raise Exception('xx')
         for baseDir, baseNeiInd in baseNeiDirLst:
             if baseDir == DirType.left:
@@ -271,6 +308,8 @@ class STC2Path(object):
             if baseDir == DirType.virConnect:
                 noIntersectLst.append(baseNeiInd)
         return noIntersectLst
+
+
     def reDefineNeighbor(self,stcInd: STCGridInd):
         if stcInd.virType ==  STCVirtualVertType.VLB:
             ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
@@ -281,9 +320,149 @@ class STC2Path(object):
             self._reDefineNeighborAdd[nrbind] = nltind
             self._reDefineNeighborRemove[nltind] = ltind
             self._reDefineNeighborRemove[nrbind] = rbind
+        if stcInd.virType == STCVirtualVertType.VRT:
+            ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
+            rbind = self._stcGraph.nodes[stcInd]['vert']._RBInd
+            nltind = GridInd(ltind.row, ltind.col + 1)
+            nrbind = GridInd(rbind.row + 1, rbind.col)
+            self._reDefineNeighborAdd[nltind] = nrbind
+            self._reDefineNeighborAdd[nrbind] = nltind
+            self._reDefineNeighborRemove[nltind] = ltind
+            self._reDefineNeighborRemove[nrbind] = rbind
+
+        if stcInd.virType == STCVirtualVertType.VLT:
+            rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+            lbind = self._stcGraph.nodes[stcInd]['vert']._LBInd
+            nrtind = GridInd(rtind.row, rtind.col + 1)
+            nlbind = GridInd(lbind.row - 1, lbind.col)
+            self._reDefineNeighborAdd[nrtind] = nlbind
+            self._reDefineNeighborAdd[nlbind] = nrtind
+            self._reDefineNeighborRemove[nrtind] = rtind
+            self._reDefineNeighborRemove[nlbind] = lbind
+
+        if stcInd.virType == STCVirtualVertType.VRB:
+            rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+            lbind = self._stcGraph.nodes[stcInd]['vert']._LBInd
+            nrtind = GridInd(rtind.row + 1, rtind.col)
+            nlbind = GridInd(lbind.row, lbind.col - 1)
+            self._reDefineNeighborAdd[nrtind] = nlbind
+            self._reDefineNeighborAdd[nlbind] = nrtind
+            self._reDefineNeighborRemove[nrtind] = rtind
+            self._reDefineNeighborRemove[nlbind] = lbind
+
+    def reDefineNeighborSp(self, stcInd: STCGridInd, neiInd: STCGridInd):
+        if stcInd.virType == STCVirtualVertType.VRB:
+            rbind = self._stcGraph.nodes[stcInd]['vert']._RBInd
+            dir = getDir(stcInd,neiInd)
+            if dir == DirType.right:
+                rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+                nrtind = GridInd(rtind.row + 1, rtind.col)
+                self._reDefineNeighborAdd[rbind] = nrtind
+                self._reDefineNeighborAdd[nrtind] = rbind
+            if dir == DirType.bottom:
+                lbind = self._stcGraph.nodes[stcInd]['vert']._LBInd
+                nlbind = GridInd(lbind.row, lbind.col - 1)
+                self._reDefineNeighborAdd[rbind] = nlbind
+                self._reDefineNeighborAdd[nlbind] = rbind
+
+        if stcInd.virType == STCVirtualVertType.VLT:
+            ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
+            dir = getDir(stcInd,neiInd)
+            if dir == DirType.top:
+                rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+                nrtind = GridInd(rtind.row, rtind.col + 1)
+                self._reDefineNeighborAdd[ltind] = nrtind
+                self._reDefineNeighborAdd[nrtind] = ltind
+            if dir == DirType.left:
+                lbind = self._stcGraph.nodes[stcInd]['vert']._LBInd
+                nlbind = GridInd(lbind.row - 1, lbind.col)
+                self._reDefineNeighborAdd[ltind] = nlbind
+                self._reDefineNeighborAdd[nlbind] = ltind
+
+
+        if stcInd.virType == STCVirtualVertType.VLB:
+            lbind= self._stcGraph.nodes[stcInd]['vert']._LBInd
+            dir = getDir(stcInd,neiInd)
+            if dir == DirType.left:
+                ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
+                nltind = GridInd(ltind.row - 1, ltind.col)
+                self._reDefineNeighborAdd[lbind] = nltind
+                self._reDefineNeighborAdd[nltind] = lbind
+            if dir == DirType.bottom:
+                rbind = self._stcGraph.nodes[stcInd]['vert']._RBInd
+                nrbind = GridInd(rbind.row, rbind.col - 1)
+                self._reDefineNeighborAdd[lbind] = nrbind
+                self._reDefineNeighborAdd[nrbind] = lbind
+
+
+        if stcInd.virType == STCVirtualVertType.VRT:
+            rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+            dir = getDir(stcInd,neiInd)
+            if dir == DirType.bottom:
+                ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
+                nltind = GridInd(ltind.row, ltind.col + 1)
+                self._reDefineNeighborAdd[rtind] = nltind
+                self._reDefineNeighborAdd[nltind] = rtind
+            if dir == DirType.right:
+                rbind = self._stcGraph.nodes[stcInd]['vert']._RBInd
+                nrbind = GridInd(rbind.row + 1, rbind.col)
+                self._reDefineNeighborAdd[rtind] = nrbind
+                self._reDefineNeighborAdd[nrbind] = rtind
+
+        # if stcInd.virType == STCVirtualVertType.VLT:
+        #     ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
+        #     dir = getDir(stcInd,neiInd)
+        #     if dir == DirType.top:
+        #         rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+        #         nrtind = GridInd(rtind.row, rtind.col + 1)
+        #         self._reDefineNeighborAdd[ltind] = nrtind
+        #         self._reDefineNeighborAdd[nrtind] = ltind
+        #     if dir == DirType.left:
+        #         lbind = self._stcGraph.nodes[stcInd]['vert']._LBInd
+        #         nlbind = GridInd(lbind.row - 1, lbind.col)
+        #         self._reDefineNeighborAdd[ltind] = nlbind
+        #         self._reDefineNeighborAdd[nlbind] = ltind
+        # if
+        # if stcInd.virType == STCVirtualVertType.VLB:
+        #     ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
+        #     rbind = self._stcGraph.nodes[stcInd]['vert']._RBInd
+        #     nltind = GridInd(ltind.row - 1, ltind.col)
+        #     nrbind = GridInd(rbind.row, rbind.col - 1)
+        #     self._reDefineNeighborAdd[nltind] = nrbind
+        #     self._reDefineNeighborAdd[nrbind] = nltind
+        #     self._reDefineNeighborRemove[nltind] = ltind
+        #     self._reDefineNeighborRemove[nrbind] = rbind
+        # if stcInd.virType == STCVirtualVertType.VRT:
+        #     ltind = self._stcGraph.nodes[stcInd]['vert']._LTInd
+        #     rbind = self._stcGraph.nodes[stcInd]['vert']._RBInd
+        #     nltind = GridInd(ltind.row, ltind.col + 1)
+        #     nrbind = GridInd(rbind.row + 1, rbind.col)
+        #     self._reDefineNeighborAdd[nltind] = nrbind
+        #     self._reDefineNeighborAdd[nrbind] = nltind
+        #     self._reDefineNeighborRemove[nltind] = ltind
+        #     self._reDefineNeighborRemove[nrbind] = rbind
+        #
+        # if stcInd.virType == STCVirtualVertType.VLT:
+        #     rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+        #     lbind = self._stcGraph.nodes[stcInd]['vert']._LBInd
+        #     nrtind = GridInd(rtind.row, rtind.col + 1)
+        #     nlbind = GridInd(lbind.row - 1, lbind.col)
+        #     self._reDefineNeighborAdd[nrtind] = nlbind
+        #     self._reDefineNeighborAdd[nlbind] = nrtind
+        #     self._reDefineNeighborRemove[nrtind] = rtind
+        #     self._reDefineNeighborRemove[nlbind] = lbind
+        #
+        # if stcInd.virType == STCVirtualVertType.VRB:
+        #     rtind = self._stcGraph.nodes[stcInd]['vert']._RTInd
+        #     lbind = self._stcGraph.nodes[stcInd]['vert']._LBInd
+        #     nrtind = GridInd(rtind.row + 1, rtind.col)
+        #     nlbind = GridInd(lbind.row, lbind.col - 1)
+        #     self._reDefineNeighborAdd[nrtind] = nlbind
+        #     self._reDefineNeighborAdd[nlbind] = nrtind
+        #     self._reDefineNeighborRemove[nrtind] = rtind
+        #     self._reDefineNeighborRemove[nlbind] = lbind
 
             # self._reDefineNeighbor[ltind] =
-
     def getVirBaseInd(self,stc_ind:STCGridInd):
         if stc_ind.virType == STCVirtualVertType.VLB:
             return self._stcGraph.nodes[stc_ind]['vert']._LBInd
