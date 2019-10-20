@@ -1,6 +1,4 @@
 
-
-
 import os,sys
 AbsolutePath = os.path.abspath(__file__)
 #将相对路径转换成绝对路径
@@ -50,6 +48,18 @@ def deletePop(pop):
     del del_pop[del_pos]
     return del_pop
 
+
+def convertEpop(pop,robNum):
+    robPatternLst = [[] for x in range(robNum)]
+    robID = 0
+    for ind in pop:
+        robPatternLst[robID].append(ind)
+        if robID == (robNum - 1):
+            robID = 0
+        else:
+            robID += 1
+    return robPatternLst
+
 if __name__ == '__main__':
     print(sys.argv)
     ins = MCMPInstance()
@@ -74,14 +84,15 @@ if __name__ == '__main__':
         # fileCfg = './/resData//r' + str(robNum) + '_r' + str(row) + '_c' + str(col) + '_p' + str(p[0]) + '_s' + str(
         #     r_seed) + '_Outdoor_Cfg.dat'
         # f_con = open(fileCfg, 'w')
-        fileCfg  = './/resData//' +fileName+ '//res_devip_s' + str(rSeed)  + '.dat'
+        fileCfg  = 'D:\\pycode\\MCMP_encode//resData//' +fileName+ '//devip//res_s' + str(rSeed)  + '.dat'
         f_con = open(fileCfg, 'w')
-        print('seed = ',rSeed)
+        # print('seed = ',rSeed)
         toolbox = initOperator()
-        pop = toolbox.population(100)
-        fitBool, fitness = stc_eval.evaluate(pop)
+        pop = toolbox.population(stc_eval._stcGraph.number_of_nodes())
+
+        fitBool, fitness = stc_eval.evaluate(convertEpop(pop,ins._robNum))
         # print(pop)
-        maxEvaluationTimes = 20
+        maxEvaluationTimes = 60000
         evaluationTimes = 0
         endBool = False
         while True:
@@ -89,13 +100,13 @@ if __name__ == '__main__':
             for k,ind in enumerate(subPop):
                 insPop = insertPop(pop,ind)
                 # print(insPop)
-                insBool, insFitness = stc_eval.evaluate(insPop)
+                insBool, insFitness = stc_eval.evaluate(convertEpop(insPop,ins._robNum))
                 repPop = replacePop(pop,ind)
                 # print(repPop)
-                repBool, repFitness = stc_eval.evaluate(repPop)
+                repBool, repFitness = stc_eval.evaluate(convertEpop(repPop,ins._robNum))
                 delPop = deletePop(pop)
                 # print(delPop)
-                delBool, delFitness = stc_eval.evaluate(delPop)
+                delBool, delFitness = stc_eval.evaluate(convertEpop(delPop,ins._robNum))
                 fitnessLst = [insFitness - fitness, repFitness - fitness, delFitness - fitness]
                 minFitness = min(fitnessLst)
                 if minFitness < 0:

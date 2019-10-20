@@ -179,7 +179,8 @@ class STC2Path(object):
                 stc_ind = self._s_map.gridInd2STCGridInd(baseInd)
                 stcNeiLst = list (stree.neighbors(stc_ind))
                 if baseInd.row == 18 and baseInd.col == 3:
-                    print(baseInd)
+                    pass
+                    # print(baseInd)
                 noIntersectLst = self.intersect(baseInd,stc_ind,stcNeiLst)
 
                 chsSameMega = False

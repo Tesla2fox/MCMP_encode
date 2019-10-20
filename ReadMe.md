@@ -67,7 +67,30 @@ astc是479
 
 random method  是 472
 
+random 算出来的最小值为 466 （我死了）
 
+std DE 466
+
+stc DE 465
+
+
+
+
+
+
+
+### 需要比较的算例
+
+1. r2_r30_c30_p1_s1_Outdoor_Cfg
+2. r4_r30_c30_p1_s1000_Outdoor_Cfg
+
+
+
+
+
+
+
+### 移动机器人数量影响的算例
 
 
 

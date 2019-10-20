@@ -69,6 +69,7 @@ class STCEvaluator(object):
         self.stcConvertPath = STC2Path(self._ins, self._s_map)
         pass
 
+
     def evaluate(self, x):
         # print('waySTCNodeNum', self._waySTCNodeNum)
         # print(x)
@@ -84,21 +85,28 @@ class STCEvaluator(object):
 
     def generateSTree(self,x):
         self._robPatternLst = [[] for x in range(self._robNum)]
-        robID = 0
-        for ind in x:
-            # main_dir,first_dir = self._patternLst[floor(ind[0]/0.125)]
-            firstOrdPos = ind[0]
-            patternInd = floor(ind[1]/0.125)
-            '''
-            感觉没有必要那么大
-            '''
-            rob_step = floor(ind[2] * self._stcGraph.number_of_nodes() * 0.5)
-            self._robPatternLst[robID].append((firstOrdPos,patternInd,rob_step))
+        for robID in range(self._robNum):
+            for ind in x[robID]:
+                firstOrdPos = ind[0]
+                patternInd = floor(ind[1] / 0.125)
+                rob_step = floor(ind[2] * self._stcGraph.number_of_nodes() * 0.5)
+                self._robPatternLst[robID].append((firstOrdPos, patternInd, rob_step))
 
-            if robID == (self._robNum-1):
-                robID = 0
-            else:
-                robID += 1
+        # robID = 0
+        # for ind in x:
+        #     # main_dir,first_dir = self._patternLst[floor(ind[0]/0.125)]
+        #     firstOrdPos = ind[0]
+        #     patternInd = floor(ind[1]/0.125)
+        #     '''
+        #     感觉没有必要那么大
+        #     '''
+        #     rob_step = floor(ind[2] * self._stcGraph.number_of_nodes() * 0.5)
+        #     self._robPatternLst[robID].append((firstOrdPos,patternInd,rob_step))
+        #
+        #     if robID == (self._robNum-1):
+        #         robID = 0
+        #     else:
+        #         robID += 1
         # print(self._robPatternLst)
         # print(len(self._robPatternLst[0]))
         # print(len(self._robPatternLst[1]))
@@ -213,24 +221,19 @@ class STCEvaluator(object):
         return pos
 
     def getNextBranchPos(self,robID, var):
-        base_angle = var * 2 * math.pi
         robSet = self._robSetLst[robID]
         robNeiLst = []
-        # for stc_ind in robSet:
-            # print(stc_ind)
-
         for stc_ind in robSet:
             # print('stc_ind = ', stc_ind)
             neiLst = self._stcGraph.neighbors(stc_ind)
             for neiInd in neiLst:
                 if neiInd not in self._coverSet:
                     # print('neiInd = ',neiInd)
-                    angle = self.calAngle(robID,neiInd)
-                    robNeiLst.append((stc_ind, neiInd, abs(angle -base_angle)))
+                    dis = self.calBranchDis(robID,neiInd)
+                    robNeiLst.append((stc_ind, neiInd, dis))
                     # print(abs(angle -base_angle))
         robNeiNum  = len(robNeiLst)
         if robNeiNum != 0 :
-        # print(robNeiSet)
             robNeiSet = sorted(robNeiLst, key = lambda  x: x[2])
             resInd = floor(robNeiNum * var)
             return True,robNeiSet[resInd][0],robNeiSet[resInd][1]
@@ -253,6 +256,15 @@ class STCEvaluator(object):
         else:
             return math.atan2(y,x) + math.pi
 
+    def calBranchDis(self,robID,stc_ind):
+        # dis = 0
+        vec_base = np.array([self._stcGraph.nodes[stc_ind]['vert']._pos_x, self._stcGraph.nodes[stc_ind]['vert']._pos_y])
+        rob_stc_ind = self._robStartSTCIndLst[robID]
+        vec = np.array([self._stcGraph.nodes[rob_stc_ind]['vert']._pos_x, self._stcGraph.nodes[rob_stc_ind]['vert']._pos_y])
+        dis = np.linalg.norm(vec_base - vec)
+        return dis
+
+
     def getFirstPosByDis(self,robID, var):
         robSet = self._robSetLst[robID]
         robNeiSet = []
@@ -273,6 +285,8 @@ class STCEvaluator(object):
     def calFirstDis(self,robID,stc_ind):
         dis = 0
         vec_base = np.array([self._stcGraph.nodes[stc_ind]['vert']._pos_x, self._stcGraph.nodes[stc_ind]['vert']._pos_y])
+
+
         for x in range(self._robNum):
             if x == robID:
                 continue
