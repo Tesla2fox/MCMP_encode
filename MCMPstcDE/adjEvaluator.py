@@ -78,10 +78,20 @@ class Adj_Evaluator(object):
         for ind, nodeInd in enumerate(self._adjGraph.nodes):
             self._indDic[ind] = nodeInd
         pass
+        self._robStcIndLst = []
+        for robID in range(self._robNum):
+            stc_ind = self._s_map.gridInd2STCGridInd(GridInd(row=self._robPosLst[robID][0],
+                                                      col = self._robPosLst[robID][1]))
+            self._robStcIndLst.append(stc_ind)
 
     def evaluate(self,x):
+        recordTimeBool = True
+        if recordTimeBool:
+            t_start = time.clock()
         self.generateSTree(x)
-
+        if recordTimeBool:
+            t_end = time.clock()
+            print(' _runTime ', t_end - t_start)
     def generateSTree(self,x):
 
         self._adjGraph = nx.Graph()
@@ -89,14 +99,15 @@ class Adj_Evaluator(object):
             if self._stcGraph.nodes[node]['vert']._type == STCVertType.obstacle:
                 continue
             self._adjGraph.add_node(node)
-        # self._adjGraph.add_nodes_from(self._stcGraph.nodes())
+        print(len(list(nx.connected_components(self._adjGraph))))
 
-        print(list(nx.connected_components(self._adjGraph)))
-        # for robID in range(self._robNum):
-        #     stc_ind  = self._s_map.gridInd2STCGridInd(GridInd(row = self._robPosLst[robID][0],
-        #                                                   col = self._robPosLst[robID][1]))
-            # self._adjGraph.a
+
+        findTimes = 0
         for x_ind, x_val in x:
+            if findTimes > 200:
+                break
+            findTimes += 1
+            nodeInd = self._indDic[x_ind]
             nodeInd = self._indDic[x_ind]
             neiLst = self._stcGraph.neighbors(nodeInd)
             dirNeiLst = []
@@ -110,28 +121,65 @@ class Adj_Evaluator(object):
                 dirNeiLst.append((nei, nei_dir))
             # print('b', dirNeiLst)
             neiNum = len(dirNeiLst)
-            if neiNum == 0:
-                continue
-            dirNeiLst = sorted(dirNeiLst, key=functools.cmp_to_key(cmpNeiDir))
-            chsInd = floor(neiNum * x_val)
-            self._adjGraph.add_edge(nodeInd, dirNeiLst[chsInd][0])
-        print(nx.is_connected(self._adjGraph))
-        print(len(list(nx.connected_components(self._adjGraph))))
+            if neiNum != 0:
+                dirNeiLst = sorted(dirNeiLst, key=functools.cmp_to_key(cmpNeiDir))
+                chsInd = floor(neiNum * x_val)
+                self._adjGraph.add_edge(nodeInd, dirNeiLst[chsInd][0])
+                # print('chsInd ', dirNeiLst[chsInd][0])
+            else:
+                # raise  Exception('xx')
+                g_comp = list(nx.connected_components(self._adjGraph))
+                for g_comp_ind, component in enumerate(g_comp):
+                    if nodeInd in component:
+                        break
+                # if component
+                # component method is not stable
+                print(list(component))
+                robNeiLst = []
+                robCompBool = False
+                if self.robComp(component):
+                    robCompBool = True
+                for stc_ind in component:
+                    c_neiLst = self._stcGraph.neighbors(stc_ind)
+                    for neiInd in c_neiLst:
+                        if neiInd in component:
+                            continue
+                        # if nx.has_path(neiInd,)
+                        if robCompBool:
+                            if self.havePath2Rob(neiInd):
+                                continue
+                        dis = self.calNeiDis(nodeInd,neiInd)
+                        robNeiLst.append((stc_ind, neiInd, dis))
+                robNeiNum = len(robNeiLst)
+                if robNeiNum != 0:
+                    print('b ', robNeiLst)
+                    robNeiSet = sorted(robNeiLst, key=lambda x: x[2])
+                    print('a ', robNeiSet)
+                    resInd = floor(robNeiNum*x_val)
+                    self._adjGraph.add_edge(robNeiSet[resInd][0], robNeiSet[resInd][1])
+                    print('sInd  =', robNeiSet[resInd][0], ' tInd = ', robNeiSet[resInd][1])
+                    # exit()
+                    # break
+                print('len_comp = ', len(list(nx.connected_components(self._adjGraph))))
+    def robComp(self,component):
+        for robsctInd in self._robStcIndLst:
+            if robsctInd in component:
+                return True
+        return False
+    def havePath2Rob(self,stcInd):
+        for robID in range(self._robNum):
+            rob_stc_ind  = self._s_map.gridInd2STCGridInd(GridInd(row = self._robPosLst[robID][0],
+                                                          col = self._robPosLst[robID][1]))
+            if nx.has_path(self._adjGraph,rob_stc_ind, stcInd):
+                return True
+        return False
 
-        # exit()
-            # print(chsInd, dirNeiLst)
-            # if nodeInd in self._adjGraph and dirNeiLst[chsInd][0] in self._adjGraph:
-            #    pass
-            # else:
-        # x = []
-        # self._edgeLst = []
-        # ind_i = 0
-        # for i,node in enumerate(self._stcGraph.nodes):
-        #     neiLst = self._stcGraph.neighbors(node)
-            # self._edgeLst.append((node, dirNeiLst[chsInd][0]))
-            # print('a', dirNeiLst)
-            # pass
-            # exit()
+
+    def calNeiDis(self,cen_stc_ind, nei_stc_ind):
+        vec_base = np.array([self._stcGraph.nodes[cen_stc_ind]['vert']._pos_x, self._stcGraph.nodes[cen_stc_ind]['vert']._pos_y])
+        vec = np.array([self._stcGraph.nodes[nei_stc_ind]['vert']._pos_x, self._stcGraph.nodes[nei_stc_ind]['vert']._pos_y])
+        dis = np.linalg.norm(vec_base -vec)
+        return  dis
 
     def __str__(self):
         return str(self._ins) + '   adj_evaluator'
@@ -148,18 +196,25 @@ if __name__ == '__main__':
 
     num_nodes = adj_eval._adjGraph.number_of_nodes()
     np.random.seed(rdSeed)
-    rdPerm = np.random.permutation(num_nodes)
-    print('num_nodes = ', num_nodes)
+    # rdPerm = np.random.permutation(num_nodes)
+    # print('num_nodes = ', num_nodes)
     # print(rdPerm)
     # exit(rdPerm)
+    # ind = []
+    # for i in rdPerm:
+    #     ind.append((i, np.random.random()))
     ind = []
-    for i in rdPerm:
-        ind.append((i, np.random.random()))
+    for i in range(num_nodes):
+        ind.append((np.random.randint(num_nodes),np.random.random()))
+    print('num_nodes = ', num_nodes)
+    print('ind = ', ind)
+
+    # exit()
     # for i in range(num_nodes):
     #     ind.append(random.random())
     # print(ind)
     adj_eval.evaluate(ind)
-    # exit()
+    exit()
 
     allEdgeLstPnt = []
     edgeLst = []
