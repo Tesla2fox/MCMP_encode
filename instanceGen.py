@@ -35,14 +35,21 @@ def getNeighbor(envMat,lst = (0,0),row =20, col =20):
     return resLst
 
 
+ins = MCMPinstance.MCMPInstance()
+# 1.
+ins.loadCfg('D:\\py_code\\MCMP_encode\\benchmark\\r2_r36_c36_p0.85_s44_Outdoor_Cfg.dat')
+# ins.setPara(row, col, obstacleLst, robPosLst)
+draw.drawPic(ins)
+exit()
+
 if __name__ == '__main__':
     print('the generator')
     for i in range(10):
-        row = 50
-        col = 50
+        row = 36
+        col = 36
         robNum = 2 + i
-        p = np.array([0.7,0.3])
-        r_seed = 2
+        p = np.array([0.85,0.15])
+        r_seed = 44
         np.random.seed(r_seed)
 
         rob_row_lst = np.random.randint(row,size = robNum)
@@ -136,7 +143,6 @@ if __name__ == '__main__':
                 _robUnReachRowLst.append(gridUnit[0])
                 _robUnReachColLst.append(gridUnit[1])
 
-
         fileCfg = './/benchmark//r'+ str(robNum)+'_r'+str(row)+'_c'+str(col)+'_p'+str(p[0])+'_s'+str(r_seed)+'_Outdoor_Cfg.dat'
         f_con = open(fileCfg,'w')
 
@@ -157,7 +163,6 @@ if __name__ == '__main__':
             grid.append(int(_mat[rowID][colID]))
         rd.writeConf(f_con,'grid',grid)
 
-
         #
         # for rowInd in range(row):
         #     for colInd in range(col):
@@ -169,15 +174,11 @@ if __name__ == '__main__':
 
         f_con.close()
 
-
     '''
     generator benchmark over
     '''
 
-    ins = MCMPinstance.MCMPInstance()
-    ins.loadCfg(fileCfg)
-    # ins.setPara(row, col, obstacleLst, robPosLst)
-    draw.drawPic(ins)
+
     # print('edgeLst = ', edgeLst)
     # draw.drawPic(ins, edgeLst = edgeLst)
 

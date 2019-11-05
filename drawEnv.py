@@ -91,7 +91,7 @@ class Env:
         for robID in range(len(lst)):
             startTrace = go.Scatter(x=[lst[robID][0]+0.5], y=[lst[robID][1]+0.5], mode='markers',
                                     marker=dict(symbol='cross-dot', size=20),
-                                    name='Robot_' + str(robID))
+                                    name='Robot_' + str(robID +1))
             self._scatterLst.append(startTrace)
     def addEdges(self, lst=[]):
         mark_x = []
@@ -173,7 +173,7 @@ class Env:
                                    x=mark_x,
                                    y=mark_y,
                                    marker=dict(size=5),
-                                   name='Spanning-Tree'+ str(robID))
+                                   name='Spanning Tree_'+ str(robID +1))
             self._scatterLst.append(markTrace)
 
 
@@ -199,7 +199,7 @@ class Env:
                                    x=x,
                                    y=y,
                                    # marker=dict(size=10),
-                                   name='Path_' + str(robID) )
+                                   name='Path_' + str(robID +1) )
 
             self._scatterLst.append(markTrace)
     def addMidPosLst(self, pathLst = []):
@@ -211,7 +211,7 @@ class Env:
                                    x=x,
                                    y=y,
                                    marker=dict(symbol='square-dot', size=20),
-                                   name='midPos_' + str(robID) )
+                                   name='midPos_' + str(robID +1) )
             self._scatterLst.append(markTrace)
             if False:
                 for i in range(len(x)):
@@ -236,13 +236,13 @@ class Env:
                 rectDic['line']['color'] = g_color
                 rectDic['line']['width'] = 1
                 rectDic['fillcolor'] = bupu[robID]
-                rectDic['opacity'] = 0.6
+                rectDic['opacity'] = 0.3
                 self._shapeLst.append(rectDic)
                 if False:
                     self._annotationsLst.append(dict(showarrow=False,
                                                      x=pos[0] + 1,
                                                      y=pos[1] + 1,
-                                                     text= str(robID)))
+                                                     text= str(robID +1 )))
 
     def addSTCNeiGraph(self,stcGraphLst):
         g_color = 'blue'
@@ -267,7 +267,7 @@ class Env:
                     self._annotationsLst.append(dict(showarrow = False,
                                                      x = pos[0] + 1,
                                                      y = pos[1] + 1,
-                                                     text = 'n'+ str(robID)))
+                                                     text = 'n'+ str(robID + 1)))
 
     def drawPic(self, fileName='env', titleName = None, showBoolean = True,saveBoolean = False,):
         layout = dict()

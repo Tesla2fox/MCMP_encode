@@ -18,7 +18,7 @@ from MCMPinstance import MCMPInstance
 import random
 from MCMPstcDE.evaluator import STCEvaluator
 import  sys
-
+import math
 
 
 import random
@@ -59,12 +59,15 @@ def fixGene(_x):
 def initOperator(stc_eval :STCEvaluator):
     # Problem dimension
 
+    # print(stc_eval._stcGraph.number_of_nodes())
+    # print(3 * math.ceil(stc_eval._stcGraph.number_of_nodes() / 5))
+    # exit()
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMin)
 
     toolbox = base.Toolbox()
     toolbox.register("attr_float", random.random)
-    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, stc_eval._stcGraph.number_of_nodes())
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, 3 *math.ceil(stc_eval._stcGraph.number_of_nodes()/2))
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("select", tools.selRandom, k=3)
     toolbox.register("evaluate", stcEval, stc_eval = stc_eval)
@@ -82,12 +85,11 @@ def initOperator(stc_eval :STCEvaluator):
     return toolbox
 
 
-
 if __name__ == "__main__":
 
     print('begin the standard DE method')
     ins = MCMPInstance()
-    confDir = 'D:\\pycode\\MCMP_encode\\benchmark\\'
+    confDir = 'D:\\py_code\\MCMP_encode\\benchmark\\'
     if len(sys.argv) == 4:
         fileName = sys.argv[1]
         baseSeed = int(sys.argv[2])
@@ -97,7 +99,7 @@ if __name__ == "__main__":
         maxRunTimes = int(sys.argv[3])
     else:
         print('pycharm run')
-        fileName = 'r2_r40_c20_p0.9_s1000_Outdoor_Cfg'
+        fileName = 'r6_r32_c32_p0.8_s15_Outdoor_Cfg'
         baseSeed = 0
         ins.loadCfg(confDir + fileName + '.dat')
         maxRunTimes = 1
@@ -109,12 +111,12 @@ if __name__ == "__main__":
         rSeed = baseSeed + seed
         random.seed(rSeed)
 
-        fileCfg  = 'D:\\pycode\\MCMP_encode//resData//' +fileName+ '//stdde//res_s' + str(rSeed)  + '.dat'
+        fileCfg  = 'D:\\py_code\\MCMP_encode//resData//' +fileName+ '//stdde//res_s' + str(rSeed)  + '.dat'
         f_con = open(fileCfg, 'w')
 
         CR = 0.25
         F = 1
-        MU = 300
+        MU = 200
         NGEN = 200
 
         pop = toolbox.population(n=MU);
@@ -136,7 +138,6 @@ if __name__ == "__main__":
         record = stats.compile(pop)
         logbook.record(gen=0, evals=len(pop), **record)
         print(logbook.stream)
-        # print(record)
         f_con.write(str(record['min']) + '\n')
         f_con.flush()
 
@@ -158,6 +159,8 @@ if __name__ == "__main__":
             record = stats.compile(pop)
             logbook.record(gen=g, evals=len(pop), **record)
             f_con.write(str(record['min']) + '\n')
+            f_con.write(str(record) + '\n')
+            f_con.write(str(hof[0])+ '\n')
             f_con.flush()
             print(logbook.stream)
 
