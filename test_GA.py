@@ -1,8 +1,14 @@
+import sys
+# print(sys.path)
+for path in sys.path:
+    print(path)
+import plotly
 from deap import base
 from deap import creator
 from deap import tools
 import  numpy as np
 from deap import algorithms
+
 
 import  MCMPdecode
 from MCMPdecode import  MCMPInstance,MCMP_Decode
